@@ -9,9 +9,9 @@ __version__ = "0.1.0"
 __author__ = "Your Name"
 __email__ = "your.email@example.com"
 
+from .chunkers import BaseChunker, GreedyChunker, OptimalChunker
 from .core import KARAUpdater, UpdateResult
 from .splitters import BaseTextSplitter, RecursiveTextSplitter
-from .chunkers import BaseChunker, GreedyChunker, OptimalChunker
 
 __all__ = [
     "KARAUpdater",

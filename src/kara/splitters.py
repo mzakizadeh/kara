@@ -54,9 +54,7 @@ class RecursiveTextSplitter(BaseTextSplitter):
         Returns:
             List of sub-chunks
         """
-        return self._split_text_with_regex(
-            text, self.separators, self.keep_separator
-        )
+        return self._split_text_with_regex(text, self.separators, self.keep_separator)
 
     def _split_text_with_regex(
         self,
@@ -80,9 +78,7 @@ class RecursiveTextSplitter(BaseTextSplitter):
         elif isinstance(separators, str):
             separator_pattern = re.escape(separators)
         else:
-            raise ValueError(
-                "The separator must be a string or a list of strings."
-            )
+            raise ValueError("The separator must be a string or a list of strings.")
 
         if keep_separator:
             # The parentheses in the pattern keep the delimiters in the result
@@ -131,7 +127,7 @@ class SimpleTextSplitter(BaseTextSplitter):
             if len(parts) > 1:
                 # Add separator back to all parts except the last one
                 result = []
-                for i, part in enumerate(parts[:-1]):
+                for _i, part in enumerate(parts[:-1]):
                     result.append(part + self.separator)
                 result.append(parts[-1])  # Last part without separator
                 return [s for s in result if s.strip()]

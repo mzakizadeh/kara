@@ -4,11 +4,11 @@ Core KARA algorithm implementation.
 
 import hashlib
 import heapq
-from typing import List, Dict, Any, Optional, Tuple, Union
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
-from .splitters import BaseTextSplitter
 from .chunkers import BaseChunker
+from .splitters import BaseTextSplitter
 
 
 @dataclass
@@ -37,12 +37,7 @@ class UpdateResult:
     @property
     def efficiency_ratio(self) -> float:
         """Ratio of skipped operations to total operations."""
-        total = (
-            self.num_added
-            + self.num_updated
-            + self.num_skipped
-            + self.num_deleted
-        )
+        total = self.num_added + self.num_updated + self.num_skipped + self.num_deleted
         return self.num_skipped / total if total > 0 else 0.0
 
 
@@ -164,9 +159,7 @@ class KARAUpdater:
             chunk_hash = hashlib.md5(chunk_str.encode("utf-8")).hexdigest()
             self._chunk_hashes[chunk_hash] = chunk
 
-    def _update_chunks(
-        self, new_splits: List[str]
-    ) -> Tuple[List[List[str]], UpdateResult]:
+    def _update_chunks(self, new_splits: List[str]) -> Tuple[List[List[str]], UpdateResult]:
         """
         Update chunks using the KARA algorithm.
 

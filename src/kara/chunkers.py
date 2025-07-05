@@ -10,9 +10,7 @@ class BaseChunker(ABC):
     """Abstract base class for chunkers."""
 
     @abstractmethod
-    def create_chunks(
-        self, splits: List[str], max_chunk_size: int
-    ) -> List[List[str]]:
+    def create_chunks(self, splits: List[str], max_chunk_size: int) -> List[List[str]]:
         """Create chunks from splits."""
         pass
 
@@ -22,9 +20,7 @@ class GreedyChunker(BaseChunker):
     Greedy chunker that combines sub-chunks until the size limit is reached.
     """
 
-    def create_chunks(
-        self, splits: List[str], max_chunk_size: int
-    ) -> List[List[str]]:
+    def create_chunks(self, splits: List[str], max_chunk_size: int) -> List[List[str]]:
         """
         Create chunks using a greedy approach.
 
@@ -73,9 +69,7 @@ class OptimalChunker(BaseChunker):
         """
         self.balance_factor = balance_factor
 
-    def create_chunks(
-        self, splits: List[str], max_chunk_size: int
-    ) -> List[List[str]]:
+    def create_chunks(self, splits: List[str], max_chunk_size: int) -> List[List[str]]:
         """
         Create chunks using optimal approach.
 
@@ -109,9 +103,7 @@ class BalancedChunker(BaseChunker):
         """
         self.target_utilization = target_utilization
 
-    def create_chunks(
-        self, splits: List[str], max_chunk_size: int
-    ) -> List[List[str]]:
+    def create_chunks(self, splits: List[str], max_chunk_size: int) -> List[List[str]]:
         """
         Create balanced chunks.
 
