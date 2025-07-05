@@ -2,26 +2,26 @@
 LangChain integration for kara-python.
 """
 
-from typing import List, Optional, Any, Dict, Union
-from functools import reduce
+from typing import Any, Dict, List, Optional
 
 try:
-    from langchain.docstore.document import Document
-    from langchain.indexes import SQLRecordManager, index
+    from langchain.indexes import SQLRecordManager
+    from langchain_core.documents.base import Document
+    from langchain_core.embeddings import Embeddings
+    from langchain_core.indexing import index
+    from langchain_core.vectorstores import VectorStore
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     from langchain_text_splitters.base import TextSplitter
-    from langchain_core.vectorstores import VectorStore
-    from langchain_core.embeddings import Embeddings
 
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     LANGCHAIN_AVAILABLE = False
     Document = Any
-    SQLRecordManager = Any
     RecursiveCharacterTextSplitter = Any
     TextSplitter = Any
     VectorStore = Any
     Embeddings = Any
+    SQLRecordManager = Any
 
 from ..core import KARAUpdater, UpdateResult
 from ..splitters import BaseTextSplitter
@@ -52,9 +52,7 @@ class KARATextSplitter(TextSplitter):
             **kwargs: Additional arguments passed to TextSplitter
         """
         if not LANGCHAIN_AVAILABLE:
-            raise ImportError(
-                "LangChain is not installed. Install it with: pip install langchain"
-            )
+            raise ImportError("LangChain is not installed. Install it with: pip install langchain")
 
         super().__init__(**kwargs)
 
@@ -197,9 +195,7 @@ class LangChainKARAUpdater:
             separators: Optional custom separators for text splitting
         """
         if not LANGCHAIN_AVAILABLE:
-            raise ImportError(
-                "LangChain is not installed. Install it with: pip install langchain"
-            )
+            raise ImportError("LangChain is not installed. Install it with: pip install langchain")
 
         self.vectorstore_class = vectorstore_class
         self.embeddings = embeddings
@@ -217,9 +213,7 @@ class LangChainKARAUpdater:
         if record_manager_url is None:
             record_manager_url = "sqlite:///record_manager_cache.db"
 
-        self.record_manager = SQLRecordManager(
-            "kara_namespace", db_url=record_manager_url
-        )
+        self.record_manager = SQLRecordManager("kara_namespace", db_url=record_manager_url)
         self.record_manager.create_schema()
 
         self.vectorstore: Optional[Any] = None  # Using Any to avoid type errors
@@ -248,9 +242,7 @@ class LangChainKARAUpdater:
         split_documents = self.text_splitter.split_documents(documents)
 
         # Initialize vector store
-        self.vectorstore = self.vectorstore_class.from_documents(
-            split_documents, self.embeddings
-        )
+        self.vectorstore = self.vectorstore_class.from_documents(split_documents, self.embeddings)
 
         return {
             "num_added": len(split_documents),

@@ -2,8 +2,6 @@
 Tests for text splitters.
 """
 
-import pytest
-
 from kara.splitters import (
     CharacterTextSplitter,
     RecursiveTextSplitter,

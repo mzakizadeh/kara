@@ -41,7 +41,8 @@ def main():
     updated_docs = [
         "The quick brown fox jumps over the lazy dog. This is a sample document with updates.",
         "Python is a programming language. It is widely used for data science and web development.",
-        "Machine learning is a subset of artificial intelligence. It learns from data to make predictions.",
+        "Machine learning is a subset of artificial intelligence. ",
+        "It learns from data to make predictions.",
     ]
 
     print(f"\nUpdating with {len(updated_docs)} modified documents...")

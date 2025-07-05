@@ -2,8 +2,6 @@
 Tests for the core KARA algorithm.
 """
 
-import pytest
-
 from kara.core import KARAUpdater, UpdateResult
 from kara.splitters import RecursiveTextSplitter
 
@@ -13,9 +11,7 @@ class TestUpdateResult:
 
     def test_addition(self):
         """Test adding two UpdateResult objects."""
-        result1 = UpdateResult(
-            num_added=5, num_updated=2, num_skipped=10, num_deleted=3
-        )
+        result1 = UpdateResult(num_added=5, num_updated=2, num_skipped=10, num_deleted=3)
         result2 = UpdateResult(num_added=3, num_updated=1, num_skipped=7, num_deleted=2)
 
         combined = result1 + result2

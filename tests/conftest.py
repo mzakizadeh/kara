@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 def sample_text():
     """Sample text for testing."""
     return """This is a sample document for testing.
-    
+
 It contains multiple paragraphs and sections.
 Each paragraph has multiple sentences.
 Some sentences are longer than others.
@@ -43,7 +43,7 @@ The term was coined in 1959 by Arthur Samuel.
 == Types ==
 There are three main types of machine learning:
 * Supervised learning
-* Unsupervised learning  
+* Unsupervised learning
 * Reinforcement learning
 
 === Supervised Learning ===
@@ -77,7 +77,7 @@ Early developments included neural networks and decision trees.
 == Types ==
 There are four main types of machine learning:
 * Supervised learning
-* Unsupervised learning  
+* Unsupervised learning
 * Reinforcement learning
 * Semi-supervised learning
 

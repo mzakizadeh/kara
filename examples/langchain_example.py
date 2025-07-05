@@ -43,7 +43,7 @@ def main():
     - Large ecosystem of third-party packages
     - Cross-platform compatibility
 
-    Common uses include web development, data science, 
+    Common uses include web development, data science,
     automation, and artificial intelligence.
     """
 
@@ -60,10 +60,10 @@ def main():
     - Cross-platform compatibility (Windows, Mac, Linux)
     - Strong community support
 
-    Common uses include web development, data science, 
+    Common uses include web development, data science,
     automation, artificial intelligence, and machine learning.
 
-    Popular frameworks include Django, Flask, pandas, 
+    Popular frameworks include Django, Flask, pandas,
     NumPy, and TensorFlow.
     """
 
