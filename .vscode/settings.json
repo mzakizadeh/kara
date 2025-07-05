@@ -8,9 +8,6 @@
             "source.fixAll": "explicit"
         }
     },
-    "ruff.lint.args": [
-        "--config=pyproject.toml"
-    ],
     "ruff.organizeImports": true,
     "ruff.fixAll": true,
     "editor.formatOnSave": true
