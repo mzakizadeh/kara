@@ -32,8 +32,8 @@ dependencies = ["numpy>=1.21.0", "typing-extensions>=4.0.0"]
 [project.optional-dependencies]
 langchain = [
     "langchain>=0.1.0",
-    "langchain-community>=0.0.1",
-    "langchain-core>=0.0.1",
+    "langchain_community>=0.0.1",
+    "langchain_core>=0.0.1",
 ]
 dev = [
     "pytest>=7.0.0",
