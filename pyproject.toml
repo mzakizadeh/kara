@@ -78,7 +78,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.ruff.lint.isort]
-known-first-party = ["pykara"]
+known-first-party = ["kara-python"]
 
 [tool.mypy]
 python_version = "3.9"
@@ -92,4 +92,4 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--cov=pykara --cov-report=html --cov-report=term-missing"
+addopts = "--cov=kara --cov-report=html --cov-report=term-missing"
