@@ -4,7 +4,7 @@ Text splitters for breaking documents into sub-chunks.
 
 import re
 from abc import ABC, abstractmethod
-from typing import List, Union
+from typing import List, Optional, Union
 
 
 class BaseTextSplitter(ABC):
@@ -25,7 +25,7 @@ class RecursiveTextSplitter(BaseTextSplitter):
 
     def __init__(
         self,
-        separators: List[str] = None,
+        separators: Optional[List[str]] = None,
         chunk_size: int = 1000,
         overlap: int = 0,
         keep_separator: bool = True,

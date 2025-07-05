@@ -5,7 +5,7 @@ Core KARA algorithm implementation.
 import hashlib
 import heapq
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from .chunkers import BaseChunker
 from .splitters import BaseTextSplitter
@@ -136,7 +136,7 @@ class KARAUpdater:
             return sum(len(sub) for sub in chunk)
 
         result = []
-        current_chunk = []
+        current_chunk: List[str] = []
 
         for split in splits:
             if chunk_length(current_chunk) + len(split) > self.max_chunk_size:
@@ -151,7 +151,7 @@ class KARAUpdater:
 
         return result
 
-    def _build_chunk_hash_map(self):
+    def _build_chunk_hash_map(self) -> None:
         """Build a hash map of current chunks."""
         self._chunk_hashes = {}
         for chunk in self._current_chunks:
@@ -176,7 +176,7 @@ class KARAUpdater:
             return [], UpdateResult(num_deleted=len(old_chunk_hashes))
 
         # Build graph of possible chunks
-        edges = [[] for _ in range(N + 1)]
+        edges: List[List[Tuple[int, float, List[str], str]]] = [[] for _ in range(N + 1)]
 
         for i in range(N):
             current_length = 0
@@ -204,10 +204,10 @@ class KARAUpdater:
         # Find optimal path using Dijkstra's algorithm
         min_cost = [float("inf")] * (N + 1)
         min_cost[0] = 0
-        previous_node = [None] * (N + 1)
-        previous_edge = [None] * (N + 1)
+        previous_node: List[Optional[int]] = [None] * (N + 1)
+        previous_edge: List[Optional[Tuple[int, float, List[str], str]]] = [None] * (N + 1)
 
-        heap = [(0, 0)]
+        heap: List[Tuple[float, int]] = [(0, 0)]
 
         while heap:
             cost_u, u = heapq.heappop(heap)
@@ -219,13 +219,13 @@ class KARAUpdater:
                 if new_cost < min_cost[v]:
                     min_cost[v] = new_cost
                     previous_node[v] = u
-                    previous_edge[v] = (chunk_splits, chunk_hash, edge_cost)
+                    previous_edge[v] = (v, edge_cost, chunk_splits, chunk_hash)
                     heapq.heappush(heap, (new_cost, v))
 
         # Reconstruct the solution
-        new_chunks = []
+        new_chunks: List[List[str]] = []
         result = UpdateResult()
-        used_hashes = set()
+        used_hashes: Set[str] = set()
 
         node = N
         while node > 0:
@@ -233,7 +233,7 @@ class KARAUpdater:
             if edge is None:
                 break
 
-            chunk_splits, chunk_hash, edge_cost = edge
+            _, edge_cost, chunk_splits, chunk_hash = edge
             new_chunks.insert(0, chunk_splits)
 
             if chunk_hash in old_chunk_hashes:
@@ -242,7 +242,10 @@ class KARAUpdater:
             else:
                 result.num_added += 1
 
-            node = previous_node[node]
+            prev_node = previous_node[node]
+            if prev_node is None:
+                break
+            node = prev_node
 
         # Count deleted chunks
         for chunk_hash in old_chunk_hashes:

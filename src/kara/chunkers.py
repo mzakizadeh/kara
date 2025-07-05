@@ -36,7 +36,7 @@ class GreedyChunker(BaseChunker):
             return sum(len(sub) for sub in chunk)
 
         result = []
-        current_chunk = []
+        current_chunk: List[str] = []
 
         for split in splits:
             if chunk_length(current_chunk) + len(split) > max_chunk_size:
@@ -120,7 +120,7 @@ class BalancedChunker(BaseChunker):
             return sum(len(sub) for sub in chunk)
 
         result = []
-        current_chunk = []
+        current_chunk: List[str] = []
 
         for split in splits:
             current_length = chunk_length(current_chunk)

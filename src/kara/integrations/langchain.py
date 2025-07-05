@@ -6,22 +6,13 @@ from typing import Any, Dict, List, Optional
 
 try:
     from langchain.indexes import SQLRecordManager
-    from langchain_core.documents.base import Document
-    from langchain_core.embeddings import Embeddings
     from langchain_core.indexing import index
-    from langchain_core.vectorstores import VectorStore
-    from langchain_text_splitters import RecursiveCharacterTextSplitter
     from langchain_text_splitters.base import TextSplitter
-
-    LANGCHAIN_AVAILABLE = True
-except ImportError:
-    LANGCHAIN_AVAILABLE = False
-    Document = Any
-    RecursiveCharacterTextSplitter = Any
-    TextSplitter = Any
-    VectorStore = Any
-    Embeddings = Any
-    SQLRecordManager = Any
+except ImportError as e:
+    raise ImportError(
+        "LangChain is not installed. This module requires LangChain to be installed. "
+        "Please install it with: pip install langchain langchain-community"
+    ) from e
 
 from ..core import KARAUpdater, UpdateResult
 from ..splitters import BaseTextSplitter
@@ -51,9 +42,6 @@ class KARATextSplitter(TextSplitter):
             is_separator_regex: Whether separators are regex patterns
             **kwargs: Additional arguments passed to TextSplitter
         """
-        if not LANGCHAIN_AVAILABLE:
-            raise ImportError("LangChain is not installed. Install it with: pip install langchain")
-
         super().__init__(**kwargs)
 
         # Initialize the underlying splitter
@@ -61,7 +49,7 @@ class KARATextSplitter(TextSplitter):
 
         self._kara_splitter = RecursiveTextSplitter(
             separators=separators or ["\n\n", "\n", " ", ""],
-            keep_separator=self._keep_separator,
+            keep_separator=bool(self._keep_separator),
         )
 
         # Initialize KARA updater
@@ -150,7 +138,7 @@ class KARATextSplitter(TextSplitter):
 class LangChainTextSplitter(BaseTextSplitter):
     """Adapter for LangChain text splitters."""
 
-    def __init__(self, langchain_splitter):
+    def __init__(self, langchain_splitter: Any) -> None:
         """
         Initialize with a LangChain text splitter.
 
@@ -161,7 +149,8 @@ class LangChainTextSplitter(BaseTextSplitter):
 
     def split_text(self, text: str) -> List[str]:
         """Split text using the LangChain splitter."""
-        return self.langchain_splitter.split_text(text)
+        result = self.langchain_splitter.split_text(text)
+        return list(result)  # Ensure return type is List[str]
 
 
 class LangChainKARAUpdater:
@@ -194,9 +183,6 @@ class LangChainKARAUpdater:
             record_manager_url: URL for the record manager database
             separators: Optional custom separators for text splitting
         """
-        if not LANGCHAIN_AVAILABLE:
-            raise ImportError("LangChain is not installed. Install it with: pip install langchain")
-
         self.vectorstore_class = vectorstore_class
         self.embeddings = embeddings
         self.epsilon = epsilon
@@ -242,7 +228,7 @@ class LangChainKARAUpdater:
         split_documents = self.text_splitter.split_documents(documents)
 
         # Initialize vector store
-        self.vectorstore = self.vectorstore_class.from_documents(split_documents, self.embeddings)
+        self.vectorstore = self.vectorstore_class.from_documents(split_documents, self.embeddings)  # type: ignore
 
         return {
             "num_added": len(split_documents),
@@ -319,4 +305,5 @@ class LangChainKARAUpdater:
         if self.vectorstore is None:
             return []
 
-        return self.vectorstore.similarity_search(query, k=k)
+        result = self.vectorstore.similarity_search(query, k=k)
+        return list(result)  # Ensure return type is List[Any]
