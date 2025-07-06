@@ -1,5 +1,5 @@
 """
-LangChain integration for kara-python.
+LangChain integration for kara-py.
 """
 
 from typing import Any, Dict, List, Optional

@@ -1,5 +1,5 @@
 """
-kara-python - Knowledge-Aware Re-embedding Algorithm
+kara-py - Knowledge-Aware Re-embedding Algorithm
 
 A Python library for efficient updates to RAG knowledge bases,
 minimizing embedding operations through intelligent chunk reuse.

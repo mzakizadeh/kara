@@ -1,7 +1,7 @@
 # KARA - Knowledge-Aware Re-embedding Algorithm
 
-[![PyPI version](https://badge.fury.io/py/kara-python.svg)](https://badge.fury.io/py/kara-python)
-[![Python Support](https://img.shields.io/pypi/pyversions/kara-python.svg)](https://pypi.org/project/kara-python/)
+[![PyPI version](https://badge.fury.io/py/kara-py.svg)](https://badge.fury.io/py/kara-py)
+[![Python Support](https://img.shields.io/pypi/pyversions/kara-py.svg)](https://pypi.org/project/kara-py/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 KARA is a Python library for efficient document updates in RAG systems. It minimizes embedding operations by intelligently reusing existing chunks when documents are updated.
@@ -9,7 +9,7 @@ KARA is a Python library for efficient document updates in RAG systems. It minim
 ## Installation
 
 ```bash
-pip install kara-python
+pip install kara-py
 ```
 
 ## Quick Start

@@ -1,5 +1,5 @@
 """
-Basic usage example of kara-python.
+Basic usage example of kara-py.
 
 This example demonstrates the core functionality of the KARA algorithm
 for efficient document chunk updates.
@@ -9,8 +9,8 @@ from kara import KARAUpdater, RecursiveTextSplitter
 
 
 def main():
-    """Demonstrate basic kara-python usage."""
-    print("kara-python Basic Usage Example")
+    """Demonstrate basic kara-py usage."""
+    print("kara-py Basic Usage Example")
     print("=" * 40)
 
     # Create text splitter

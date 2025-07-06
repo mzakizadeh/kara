@@ -1,7 +1,7 @@
 """
-LangChain integration example for kara-python.
+LangChain integration example for kara-py.
 
-This example demonstrates how to use kara-python with LangChain
+This example demonstrates how to use kara-py with LangChain
 for efficient RAG knowledge base updates using the KARATextSplitter.
 """
 
@@ -21,13 +21,13 @@ except ImportError:
 
 
 def main():
-    """Demonstrate LangChain integration with kara-python."""
+    """Demonstrate LangChain integration with kara-py."""
     if not DEPENDENCIES_AVAILABLE:
         print("Error: Missing dependencies. Install with:")
-        print("pip install kara-python[langchain]")
+        print("pip install kara-py[langchain]")
         return
 
-    print("kara-python + LangChain Integration Example")
+    print("kara-py + LangChain Integration Example")
     print("=" * 40)
 
     # Sample documents

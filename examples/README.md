@@ -1,6 +1,6 @@
-# kara-python Examples
+# kara-py Examples
 
-This directory contains example scripts demonstrating how to use kara-python.
+This directory contains example scripts demonstrating how to use kara-py.
 
 ## Examples
 
@@ -9,9 +9,9 @@ This directory contains example scripts demonstrating how to use kara-python.
 
 ## Running the Examples
 
-1. Install kara-python with dependencies:
+1. Install kara-py with dependencies:
    ```bash
-   pip install kara-python[langchain]
+   pip install kara-py[langchain]
    ```
 
 2. Run an example:
