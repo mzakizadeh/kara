@@ -15,7 +15,7 @@ except ImportError as e:
     ) from e
 
 from ..core import KARAUpdater, UpdateResult
-from ..splitters import BaseTextSplitter
+from ..splitters import BaseDocumentChunker, RecursiveCharacterChunker
 
 
 class KARATextSplitter(TextSplitter):
@@ -44,19 +44,17 @@ class KARATextSplitter(TextSplitter):
         """
         super().__init__(**kwargs)
 
-        # Initialize the underlying splitter
-        from ..splitters import RecursiveTextSplitter
-
-        self._kara_splitter = RecursiveTextSplitter(
+        # Initialize the underlying chunker
+        self._kara_chunker = RecursiveCharacterChunker(
             separators=separators or ["\n\n", "\n", " ", ""],
             keep_separator=bool(self._keep_separator),
+            chunk_size=self._chunk_size,
         )
 
         # Initialize KARA updater
         self.kara_updater = KARAUpdater(
-            splitter=self._kara_splitter,
+            chunker=self._kara_chunker,
             epsilon=epsilon,
-            max_chunk_size=self._chunk_size,
         )
 
         self._is_initialized = False
@@ -74,7 +72,8 @@ class KARATextSplitter(TextSplitter):
         """
         if not self._is_initialized:
             # First time - initialize
-            splits = self.kara_updater.initialize([text])
+            self.kara_updater.initialize([text])
+            splits = self.kara_updater.get_current_chunks()
             self._is_initialized = True
         else:
             # Update existing splits
@@ -135,7 +134,7 @@ class KARATextSplitter(TextSplitter):
         }
 
 
-class LangChainTextSplitter(BaseTextSplitter):
+class LangChainTextSplitter(BaseDocumentChunker):
     """Adapter for LangChain text splitters."""
 
     def __init__(self, langchain_splitter: Any) -> None:

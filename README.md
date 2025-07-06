@@ -15,12 +15,11 @@ pip install kara-py
 ## Quick Start
 
 ```python
-from kara import KARAUpdater
-from kara.splitters import RecursiveTextSplitter
+from kara import KARAUpdater, RecursiveCharacterChunker
 
 # Initialize
 updater = KARAUpdater(
-    splitter=RecursiveTextSplitter(chunk_size=1000),
+    chunker=RecursiveCharacterChunker(chunk_size=1000),
     epsilon=0.1
 )
 

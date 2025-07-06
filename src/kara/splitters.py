@@ -1,26 +1,82 @@
 """
-Text splitters for breaking documents into sub-chunks.
+Document chunkers for breaking documents into optimal chunks.
 """
 
 import re
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 
-class BaseTextSplitter(ABC):
-    """Abstract base class for text splitters."""
+class BaseDocumentChunker(ABC):
+    """Abstract base class for document chunkers."""
+
+    def __init__(self, chunk_size: int = 1000, overlap: int = 0):
+        """
+        Initialize the document chunker.
+
+        Args:
+            chunk_size: Maximum size of each chunk
+            overlap: Overlap between chunks (for future implementation)
+        """
+        self.chunk_size = chunk_size
+        self.overlap = overlap
 
     @abstractmethod
-    def split_text(self, text: str) -> List[str]:
-        """Split text into sub-chunks."""
+    def create_chunks(self, text: str) -> List[str]:
+        """Split text into optimally-sized chunks."""
         pass
 
+    @abstractmethod
+    def _split_to_units(self, text: str) -> List[str]:
+        """Split text into smallest units (e.g., by separators, tokens)."""
+        pass
 
-class RecursiveTextSplitter(BaseTextSplitter):
+    def _merge_units_greedy(self, units: List[str], max_chunk_size: int) -> List[str]:
+        """
+        Merge units greedily to create chunks within size limit.
+
+        Args:
+            units: List of text units to merge
+            max_chunk_size: Maximum size of each chunk
+
+        Returns:
+            List of chunks
+        """
+        if not units:
+            return []
+
+        def unit_length(unit: str) -> int:
+            return len(unit)
+
+        def chunk_length(chunk_units: List[str]) -> int:
+            return sum(len(unit) for unit in chunk_units)
+
+        chunks = []
+        current_chunk: List[str] = []
+
+        for unit in units:
+            # If adding this unit would exceed the max size, start a new chunk
+            if current_chunk and chunk_length(current_chunk) + unit_length(unit) > max_chunk_size:
+                # Only add non-empty chunks
+                if current_chunk:
+                    chunks.append("".join(current_chunk))
+                current_chunk = [unit]
+            else:
+                current_chunk.append(unit)
+
+        # Add the last chunk if it's not empty
+        if current_chunk:
+            chunks.append("".join(current_chunk))
+
+        return chunks
+
+
+class RecursiveCharacterChunker(BaseDocumentChunker):
     """
-    Recursive text splitter that tries multiple separators.
+    Recursive character-based chunker that tries multiple separators.
 
-    Based on the approach from your research notebook.
+    First splits text into smallest units using separators, then greedily
+    merges them into chunks within the size limit.
     """
 
     def __init__(
@@ -31,29 +87,36 @@ class RecursiveTextSplitter(BaseTextSplitter):
         keep_separator: bool = True,
     ):
         """
-        Initialize the recursive text splitter.
+        Initialize the recursive character chunker.
 
         Args:
             separators: List of separators to try, in order of preference
-            chunk_size: Target chunk size (not enforced, used for guidance)
+            chunk_size: Maximum chunk size in characters
             overlap: Overlap between chunks (not implemented yet)
             keep_separator: Whether to keep separators in the result
         """
+        super().__init__(chunk_size=chunk_size, overlap=overlap)
         self.separators = separators or ["\n\n", "\n", " ", ""]
-        self.chunk_size = chunk_size
-        self.overlap = overlap
         self.keep_separator = keep_separator
 
-    def split_text(self, text: str) -> List[str]:
+    def create_chunks(self, text: str) -> List[str]:
         """
-        Split text using the recursive approach.
+        Split text into optimally-sized chunks.
 
         Args:
             text: Input text to split
 
         Returns:
-            List of sub-chunks
+            List of chunks
         """
+        # First, split into smallest units
+        units = self._split_to_units(text)
+
+        # Then, greedily merge into chunks
+        return self._merge_units_greedy(units, self.chunk_size)
+
+    def _split_to_units(self, text: str) -> List[str]:
+        """Split text into smallest units using separators."""
         return self._split_text_with_regex(text, self.separators, self.keep_separator)
 
     def _split_text_with_regex(
@@ -71,7 +134,7 @@ class RecursiveTextSplitter(BaseTextSplitter):
             keep_separator: Whether to keep separators in the result
 
         Returns:
-            List of split text chunks
+            List of split text units
         """
         if isinstance(separators, list):
             separator_pattern = "|".join(re.escape(sep) for sep in separators)
@@ -97,30 +160,47 @@ class RecursiveTextSplitter(BaseTextSplitter):
         return [s for s in splits if s]
 
 
-class SimpleTextSplitter(BaseTextSplitter):
-    """Simple text splitter that uses a single separator."""
+class SimpleCharacterChunker(BaseDocumentChunker):
+    """Simple character chunker that uses a single separator."""
 
-    def __init__(self, separator: str = "\n", keep_separator: bool = True):
+    def __init__(
+        self,
+        separator: str = "\n",
+        chunk_size: int = 1000,
+        overlap: int = 0,
+        keep_separator: bool = True,
+    ):
         """
-        Initialize the simple text splitter.
+        Initialize the simple character chunker.
 
         Args:
             separator: Separator to use for splitting
+            chunk_size: Maximum chunk size in characters
+            overlap: Overlap between chunks (not implemented yet)
             keep_separator: Whether to keep the separator in the result
         """
+        super().__init__(chunk_size=chunk_size, overlap=overlap)
         self.separator = separator
         self.keep_separator = keep_separator
 
-    def split_text(self, text: str) -> List[str]:
+    def create_chunks(self, text: str) -> List[str]:
         """
-        Split text using the configured separator.
+        Split text into optimally-sized chunks.
 
         Args:
             text: Input text to split
 
         Returns:
-            List of sub-chunks
+            List of chunks
         """
+        # First, split into smallest units
+        units = self._split_to_units(text)
+
+        # Then, greedily merge into chunks
+        return self._merge_units_greedy(units, self.chunk_size)
+
+    def _split_to_units(self, text: str) -> List[str]:
+        """Split text into smallest units using the separator."""
         if self.keep_separator:
             # Split and keep separator
             parts = text.split(self.separator)
@@ -130,36 +210,35 @@ class SimpleTextSplitter(BaseTextSplitter):
                 for _i, part in enumerate(parts[:-1]):
                     result.append(part + self.separator)
                 result.append(parts[-1])  # Last part without separator
-                return [s for s in result if s.strip()]
+                return [s for s in result if s]
             else:
                 return parts
         else:
-            return [s for s in text.split(self.separator) if s.strip()]
+            return [s for s in text.split(self.separator) if s]
 
 
-class CharacterTextSplitter(BaseTextSplitter):
-    """Character-based text splitter."""
+class FixedSizeCharacterChunker(BaseDocumentChunker):
+    """Fixed-size character-based chunker with overlap support."""
 
     def __init__(self, chunk_size: int = 1000, overlap: int = 0):
         """
-        Initialize the character text splitter.
+        Initialize the fixed-size character chunker.
 
         Args:
             chunk_size: Size of each chunk in characters
             overlap: Overlap between chunks in characters
         """
-        self.chunk_size = chunk_size
-        self.overlap = overlap
+        super().__init__(chunk_size=chunk_size, overlap=overlap)
 
-    def split_text(self, text: str) -> List[str]:
+    def create_chunks(self, text: str) -> List[str]:
         """
-        Split text into character-based chunks.
+        Split text into fixed-size chunks.
 
         Args:
             text: Input text to split
 
         Returns:
-            List of sub-chunks
+            List of chunks
         """
         if len(text) <= self.chunk_size:
             return [text]
@@ -172,5 +251,90 @@ class CharacterTextSplitter(BaseTextSplitter):
             chunk = text[start:end]
             chunks.append(chunk)
             start = end - self.overlap
+
+        return chunks
+
+    def _split_to_units(self, text: str) -> List[str]:
+        """For fixed-size chunker, each character is a unit."""
+        return list(text)
+
+
+class RecursiveTokenChunker(BaseDocumentChunker):
+    """
+    Token-based chunker that splits text into tokens and merges them greedily.
+
+    This demonstrates how the unified chunking approach works for different
+    unit types (tokens instead of characters).
+    """
+
+    def __init__(
+        self,
+        tokenizer_function: Callable[[str], List[str]],
+        chunk_size: int = 512,
+        overlap: int = 0,
+    ):
+        """
+        Initialize the token-based chunker.
+
+        Args:
+            chunk_size: Maximum chunk size in tokens
+            overlap: Overlap between chunks in tokens
+            tokenizer_function: Function to tokenize text (defaults to simple split)
+        """
+        super().__init__(chunk_size=chunk_size, overlap=overlap)
+        self.tokenizer_function = tokenizer_function
+
+    def _default_tokenizer(self, text: str) -> List[str]:
+        """Default tokenizer that splits on whitespace."""
+        return text.split()
+
+    def create_chunks(self, text: str) -> List[str]:
+        """
+        Split text into token-based chunks.
+
+        Args:
+            text: Input text to split
+
+        Returns:
+            List of chunks
+        """
+        # First, split into tokens
+        tokens = self._split_to_units(text)
+
+        # Then, greedily merge into chunks
+        return self._merge_tokens_greedy(tokens)
+
+    def _split_to_units(self, text: str) -> List[str]:
+        """Split text into token units."""
+        return self.tokenizer_function(text)
+
+    def _merge_tokens_greedy(self, tokens: List[str]) -> List[str]:
+        """
+        Merge tokens greedily to create chunks within token limit.
+
+        Args:
+            tokens: List of tokens to merge
+
+        Returns:
+            List of chunks
+        """
+        if not tokens:
+            return []
+
+        chunks = []
+        current_chunk_tokens: List[str] = []
+
+        for token in tokens:
+            # If adding this token would exceed the max size, start a new chunk
+            if len(current_chunk_tokens) >= self.chunk_size:
+                if current_chunk_tokens:
+                    chunks.append(" ".join(current_chunk_tokens))
+                current_chunk_tokens = [token]
+            else:
+                current_chunk_tokens.append(token)
+
+        # Add the last chunk if it's not empty
+        if current_chunk_tokens:
+            chunks.append(" ".join(current_chunk_tokens))
 
         return chunks

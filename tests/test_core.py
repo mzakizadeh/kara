@@ -3,13 +3,13 @@ Tests for the core KARA algorithm.
 """
 
 from kara.core import KARAUpdater, UpdateResult
-from kara.splitters import RecursiveTextSplitter
+from kara.splitters import RecursiveCharacterChunker
 
 
 class TestUpdateResult:
     """Tests for UpdateResult class."""
 
-    def test_addition(self):
+    def test_addition(self) -> None:
         """Test adding two UpdateResult objects."""
         result1 = UpdateResult(num_added=5, num_updated=2, num_skipped=10, num_deleted=3)
         result2 = UpdateResult(num_added=3, num_updated=1, num_skipped=7, num_deleted=2)
@@ -21,20 +21,20 @@ class TestUpdateResult:
         assert combined.num_skipped == 17
         assert combined.num_deleted == 5
 
-    def test_total_operations(self):
+    def test_total_operations(self) -> None:
         """Test total operations calculation."""
         result = UpdateResult(num_added=5, num_updated=2, num_skipped=10, num_deleted=3)
 
         assert result.total_operations == 10  # added + updated + deleted
 
-    def test_efficiency_ratio(self):
+    def test_efficiency_ratio(self) -> None:
         """Test efficiency ratio calculation."""
         result = UpdateResult(num_added=5, num_updated=2, num_skipped=10, num_deleted=3)
 
         expected_ratio = 10 / 20  # skipped / total
         assert result.efficiency_ratio == expected_ratio
 
-    def test_efficiency_ratio_empty(self):
+    def test_efficiency_ratio_empty(self) -> None:
         """Test efficiency ratio with empty result."""
         result = UpdateResult()
 
@@ -44,30 +44,29 @@ class TestUpdateResult:
 class TestKARAUpdater:
     """Tests for KARAUpdater class."""
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         """Test basic initialization."""
-        splitter = RecursiveTextSplitter()
-        updater = KARAUpdater(splitter=splitter)
+        chunker = RecursiveCharacterChunker()
+        updater = KARAUpdater(chunker=chunker)
 
-        assert updater.splitter == splitter
+        assert updater.chunker == chunker
         assert updater.epsilon == 0.01
         assert updater.max_chunk_size == 1000
 
-    def test_initialize_documents(self, sample_text):
+    def test_initialize_documents(self, sample_text: str) -> None:
         """Test initializing with documents."""
-        splitter = RecursiveTextSplitter(separators=["\n"], keep_separator=True)
-        updater = KARAUpdater(splitter=splitter, max_chunk_size=100)
+        chunker = RecursiveCharacterChunker(separators=["\n"], keep_separator=True)
+        updater = KARAUpdater(chunker=chunker)
 
         chunks = updater.initialize([sample_text])
 
         assert len(chunks) > 0
-        assert all(isinstance(chunk, list) for chunk in chunks)
-        assert all(isinstance(split, str) for chunk in chunks for split in chunk)
+        assert all(isinstance(chunk, str) for chunk in chunks)
 
-    def test_update_documents(self, sample_text):
+    def test_update_documents(self, sample_text: str) -> None:
         """Test updating documents."""
-        splitter = RecursiveTextSplitter(separators=["\n"], keep_separator=True)
-        updater = KARAUpdater(splitter=splitter, max_chunk_size=100)
+        chunker = RecursiveCharacterChunker(separators=["\n"], keep_separator=True)
+        updater = KARAUpdater(chunker=chunker)
 
         # Initialize
         updater.initialize([sample_text])
@@ -81,27 +80,27 @@ class TestKARAUpdater:
         assert result.num_skipped >= 0
         assert result.num_deleted >= 0
 
-    def test_epsilon_effect(self, sample_text):
+    def test_epsilon_effect(self, sample_text: str) -> None:
         """Test the effect of epsilon parameter."""
-        splitter = RecursiveTextSplitter(separators=["\n"], keep_separator=True)
+        chunker = RecursiveCharacterChunker(separators=["\n"], keep_separator=True)
 
         # Test with low epsilon (prefer reusing)
-        updater_low = KARAUpdater(splitter=splitter, epsilon=0.001, max_chunk_size=100)
+        updater_low = KARAUpdater(chunker=chunker, epsilon=0.001)
         updater_low.initialize([sample_text])
         result_low = updater_low.update([sample_text])  # Same text
 
         # Test with high epsilon (prefer new chunks)
-        updater_high = KARAUpdater(splitter=splitter, epsilon=0.999, max_chunk_size=100)
+        updater_high = KARAUpdater(chunker=chunker, epsilon=0.999)
         updater_high.initialize([sample_text])
         result_high = updater_high.update([sample_text])  # Same text
 
         # Low epsilon should reuse more chunks
         assert result_low.num_skipped >= result_high.num_skipped
 
-    def test_empty_documents(self):
+    def test_empty_documents(self) -> None:
         """Test with empty documents."""
-        splitter = RecursiveTextSplitter()
-        updater = KARAUpdater(splitter=splitter)
+        chunker = RecursiveCharacterChunker()
+        updater = KARAUpdater(chunker=chunker)
 
         # Initialize with empty
         chunks = updater.initialize([])
@@ -115,21 +114,23 @@ class TestKARAUpdater:
         assert result.num_skipped == 0
         assert result.num_deleted == 0
 
-    def test_get_current_chunks(self, sample_text):
+    def test_get_current_chunks(self, sample_text: str) -> None:
         """Test getting current chunks."""
-        splitter = RecursiveTextSplitter(separators=["\n"], keep_separator=True)
-        updater = KARAUpdater(splitter=splitter, max_chunk_size=100)
+        chunker = RecursiveCharacterChunker(separators=["\n"], keep_separator=True)
+        updater = KARAUpdater(chunker=chunker)
 
-        chunks = updater.initialize([sample_text])
+        updater.initialize([sample_text])
         current_chunks = updater.get_current_chunks()
 
-        assert chunks == current_chunks
-        assert chunks is not current_chunks  # Should be a copy
+        assert len(current_chunks) > 0
+        assert isinstance(current_chunks, list)
 
-    def test_wikipedia_scenario(self, wikipedia_style_text, updated_wikipedia_text):
+    def test_wikipedia_scenario(
+        self, wikipedia_style_text: str, updated_wikipedia_text: str
+    ) -> None:
         """Test with Wikipedia-style text update scenario."""
-        splitter = RecursiveTextSplitter(separators=["\n"], keep_separator=True)
-        updater = KARAUpdater(splitter=splitter, epsilon=0.1, max_chunk_size=200)
+        chunker = RecursiveCharacterChunker(separators=["\n"], keep_separator=True)
+        updater = KARAUpdater(chunker=chunker, epsilon=0.1)
 
         # Initialize with original text
         updater.initialize([wikipedia_style_text])

@@ -20,7 +20,7 @@ except ImportError:
     DEPENDENCIES_AVAILABLE = False
 
 
-def main():
+def main() -> None:
     """Demonstrate LangChain integration with kara-py."""
     if not DEPENDENCIES_AVAILABLE:
         print("Error: Missing dependencies. Install with:")
@@ -121,12 +121,12 @@ def main():
     )
 
     # Initialize
-    init_result = updater.initialize_documents(original_docs)
+    init_result: dict[str, int] = updater.initialize_documents(original_docs)
     print(f"   Initialized: {init_result}")
 
     # Update
-    update_result = updater.update_documents(updated_docs)
-    print(f"   Updated: {update_result}")
+    vectorstore_update_result: dict[str, int] = updater.update_documents(updated_docs)
+    print(f"   Updated: {vectorstore_update_result}")
 
     # Test similarity search
     vectorstore = updater.get_vectorstore()

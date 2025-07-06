@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 # Test fixtures
 @pytest.fixture
-def sample_text():
+def sample_text() -> str:
     """Sample text for testing."""
     return """This is a sample document for testing.
 
@@ -31,7 +31,7 @@ End of document."""
 
 
 @pytest.fixture
-def wikipedia_style_text():
+def wikipedia_style_text() -> str:
     """Wikipedia-style text for testing."""
     return """
 Machine learning (ML) is a type of artificial intelligence.
@@ -64,7 +64,7 @@ Machine learning is used in many fields:
 
 
 @pytest.fixture
-def updated_wikipedia_text():
+def updated_wikipedia_text() -> str:
     """Updated version of Wikipedia-style text."""
     return """
 Machine learning (ML) is a type of artificial intelligence (AI).

@@ -7,8 +7,7 @@ import heapq
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
-from .chunkers import BaseChunker
-from .splitters import BaseTextSplitter
+from .splitters import BaseDocumentChunker
 
 
 @dataclass
@@ -43,7 +42,7 @@ class UpdateResult:
 
 class KARAUpdater:
     """
-    Knowledge-Aware Rebedding Algorithm updater.
+    Knowledge-Aware Re-embedding Algorithm updater.
 
     Efficiently updates document chunks by minimizing embedding operations
     through intelligent reuse of existing chunks.
@@ -51,28 +50,23 @@ class KARAUpdater:
 
     def __init__(
         self,
-        splitter: BaseTextSplitter,
-        chunker: Optional[BaseChunker] = None,
+        chunker: BaseDocumentChunker,
         epsilon: float = 0.01,
-        max_chunk_size: int = 1000,
     ):
         """
         Initialize the KARA updater.
 
         Args:
-            splitter: Text splitter for breaking documents into splits
-            chunker: Optional custom chunker (defaults to optimal chunker)
+            chunker: Document chunker for breaking documents into optimal chunks
             epsilon: Cost factor for reusing existing chunks (0 < epsilon < 1)
-            max_chunk_size: Maximum size of a chunk in characters
         """
-        self.splitter = splitter
         self.chunker = chunker
         self.epsilon = epsilon
-        self.max_chunk_size = max_chunk_size
+        self.max_chunk_size = getattr(chunker, "chunk_size", 1000)
         self._current_chunks: List[List[str]] = []
         self._chunk_hashes: Dict[str, List[str]] = {}
 
-    def initialize(self, documents: List[str]) -> List[List[str]]:
+    def initialize(self, documents: List[str]) -> List[str]:
         """
         Initialize the knowledge base with documents.
 
@@ -80,7 +74,7 @@ class KARAUpdater:
             documents: List of document texts
 
         Returns:
-            Initial chunks as lists of splits
+            Initial chunks as strings
         """
         if not documents:
             return []
@@ -88,16 +82,16 @@ class KARAUpdater:
         # For now, process only the first document
         # TODO: Extend to handle multiple documents
         document = documents[0]
-        splits = self.splitter.split_text(document)
+        chunks = self.chunker.create_chunks(document)
 
-        if self.chunker:
-            chunks = self.chunker.create_chunks(splits, self.max_chunk_size)
-        else:
-            chunks = self._greedy_merge_chunks(splits)
+        # Convert string chunks to list of splits for internal representation
+        self._current_chunks = []
+        for chunk in chunks:
+            # Split each chunk back into its component units
+            splits = self.chunker._split_to_units(chunk)
+            self._current_chunks.append(splits)
 
-        self._current_chunks = chunks
         self._build_chunk_hash_map()
-
         return chunks
 
     def update(self, documents: List[str]) -> UpdateResult:
@@ -116,7 +110,7 @@ class KARAUpdater:
         # For now, process only the first document
         # TODO: Extend to handle multiple documents
         document = documents[0]
-        new_splits = self.splitter.split_text(document)
+        new_splits = self.chunker._split_to_units(document)
 
         new_chunks, result = self._update_chunks(new_splits)
 
@@ -129,7 +123,7 @@ class KARAUpdater:
         """Get the current chunks."""
         return self._current_chunks.copy()
 
-    def _greedy_merge_chunks(self, splits: List[str]) -> List[List[str]]:
+    def _greedy_merge_splits(self, splits: List[str]) -> List[List[str]]:
         """Greedily merge splits into chunks."""
 
         def chunk_length(chunk: List[str]) -> int:
