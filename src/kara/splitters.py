@@ -94,7 +94,7 @@ class RecursiveTextSplitter(BaseTextSplitter):
         else:
             splits = re.split(separator_pattern, text)
 
-        return [s for s in splits if s.strip()]
+        return [s for s in splits if s]
 
 
 class SimpleTextSplitter(BaseTextSplitter):
