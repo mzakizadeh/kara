@@ -2,7 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/kara-py.svg)](https://badge.fury.io/py/kara-py)
 [![Python Support](https://img.shields.io/pypi/pyversions/kara-py.svg)](https://pypi.org/project/kara-py/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 KARA is a Python library for efficient document updates in RAG systems. It minimizes embedding operations by intelligently reusing existing chunks when documents are updated.
 
@@ -41,4 +41,4 @@ See the [`examples/`](examples/) directory for more usage examples.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+CC BY 4.0 License - see [LICENSE](LICENSE) file for details.
