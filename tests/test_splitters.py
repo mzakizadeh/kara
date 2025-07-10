@@ -2,11 +2,7 @@
 Tests for document chunkers.
 """
 
-from kara.splitters import (
-    FixedSizeCharacterChunker,
-    RecursiveCharacterChunker,
-    SimpleCharacterChunker,
-)
+from kara.splitters import RecursiveCharacterChunker
 
 
 class TestRecursiveCharacterChunker:
@@ -54,67 +50,3 @@ class TestRecursiveCharacterChunker:
 
         assert len(result) >= 1
         assert all(isinstance(chunk, str) for chunk in result)
-
-
-class TestSimpleCharacterChunker:
-    """Tests for SimpleCharacterChunker."""
-
-    def test_basic_chunking(self) -> None:
-        """Test basic text chunking."""
-        chunker = SimpleCharacterChunker(separator="\n")
-        result = chunker.create_chunks("line1\nline2\nline3")
-
-        assert len(result) >= 1
-        assert all(isinstance(chunk, str) for chunk in result)
-
-    def test_no_separator_preservation(self) -> None:
-        """Test chunking without separator preservation."""
-        chunker = SimpleCharacterChunker(separator="\n", keep_separator=False)
-        result = chunker.create_chunks("line1\nline2\nline3")
-
-        assert len(result) >= 1
-        assert all("\n" not in chunk for chunk in result)
-
-    def test_custom_separator(self) -> None:
-        """Test with custom separator."""
-        chunker = SimpleCharacterChunker(separator="|", keep_separator=True)
-        result = chunker.create_chunks("part1|part2|part3")
-
-        assert len(result) >= 1
-        assert all(isinstance(chunk, str) for chunk in result)
-
-
-class TestFixedSizeCharacterChunker:
-    """Tests for FixedSizeCharacterChunker."""
-
-    def test_basic_chunking(self) -> None:
-        """Test basic character chunking."""
-        chunker = FixedSizeCharacterChunker(chunk_size=10, overlap=0)
-        result = chunker.create_chunks("hello world test string")
-
-        assert len(result) > 1
-        assert all(len(chunk) <= 10 for chunk in result)
-
-    def test_with_overlap(self) -> None:
-        """Test character chunking with overlap."""
-        chunker = FixedSizeCharacterChunker(chunk_size=10, overlap=3)
-        result = chunker.create_chunks("hello world test string")
-
-        assert len(result) > 1
-        assert all(len(chunk) <= 10 for chunk in result)
-
-    def test_short_text(self) -> None:
-        """Test with text shorter than chunk size."""
-        chunker = FixedSizeCharacterChunker(chunk_size=100, overlap=0)
-        result = chunker.create_chunks("short text")
-
-        assert len(result) == 1
-        assert result[0] == "short text"
-
-    def test_exact_chunk_size(self) -> None:
-        """Test with text exactly matching chunk size."""
-        chunker = FixedSizeCharacterChunker(chunk_size=10, overlap=0)
-        result = chunker.create_chunks("1234567890")
-
-        assert len(result) == 1
-        assert result[0] == "1234567890"

@@ -101,7 +101,7 @@ class TestKARAUpdater:
 
         assert updater.chunker == chunker
         assert updater.epsilon == 0.01
-        assert updater.max_chunk_size == 1000
+        assert updater.max_chunk_size == 4000
 
     def test_create_knowledge_base(self, sample_text: str) -> None:
         """Test creating knowledge base with documents."""
