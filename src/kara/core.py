@@ -4,10 +4,71 @@ Core KARA algorithm implementation.
 
 import hashlib
 import heapq
+import warnings
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .splitters import BaseDocumentChunker
+
+
+@dataclass
+class ChunkData:
+    """Represents a chunk with its content and metadata."""
+
+    content: str
+    splits: List[str]
+    hash: str
+
+    @classmethod
+    def from_splits(cls, splits: List[str]) -> "ChunkData":
+        """Create ChunkData from splits."""
+        content = "".join(splits)
+        hash_value = hashlib.md5(content.encode("utf-8")).hexdigest()
+        return cls(content=content, splits=splits, hash=hash_value)
+
+
+@dataclass
+class ChunkedDocument:
+    """Represents the current state of the knowledge base."""
+
+    chunks: List[ChunkData]
+
+    def get_chunk_hashes(self) -> Set[str]:
+        """Get all chunk hashes in the knowledge base."""
+        return {chunk.hash for chunk in self.chunks}
+
+    def get_chunk_contents(self) -> List[str]:
+        """Get all chunk contents as strings."""
+        return [chunk.content for chunk in self.chunks]
+
+    @classmethod
+    def from_chunks(cls, chunks: List[str], chunker: BaseDocumentChunker) -> "ChunkedDocument":
+        """
+        Create a ChunkedDocument from a list of texts using the specified separators.
+        Args:
+            texts: List of text strings to chunk
+            separators: List of separators to use for chunking
+
+        Returns:
+            ChunkedDocument with chunks created
+        """
+        warnings.warn(
+            (
+                "If the separator list is not the same as that used for separating previous "
+                "chunks, the algorithm might fail."
+            ),
+            UserWarning,
+            stacklevel=2,
+        )
+        result = []
+        for text in chunks:
+            assert len(text) <= chunker.chunk_size, (
+                "Text length exceeds the maximum chunk size defined in the chunker."
+                f" Text length: {len(text)}, Max chunk size: {chunker.chunk_size}"
+            )
+            splits = chunker._split_to_units(text)
+            result.append(ChunkData.from_splits(splits))
+        return cls(chunks=result)
 
 
 @dataclass
@@ -18,6 +79,7 @@ class UpdateResult:
     num_updated: int = 0
     num_skipped: int = 0
     num_deleted: int = 0
+    new_chunked_doc: Optional["ChunkedDocument"] = None
 
     def __add__(self, other: "UpdateResult") -> "UpdateResult":
         """Add two UpdateResult objects."""
@@ -63,111 +125,109 @@ class KARAUpdater:
         self.chunker = chunker
         self.epsilon = epsilon
         self.max_chunk_size = getattr(chunker, "chunk_size", 1000)
-        self._current_chunks: List[List[str]] = []
-        self._chunk_hashes: Dict[str, List[str]] = {}
 
-    def initialize(self, documents: List[str]) -> List[str]:
+    def _get_chunker_config(self) -> Dict[str, Any]:
         """
-        Initialize the knowledge base with documents.
+        Get configuration parameters from the chunker.
+
+        Returns:
+            Dictionary with chunker configuration
+        """
+        config = {
+            "chunk_size": getattr(self.chunker, "chunk_size", None),
+            "separators": getattr(self.chunker, "separators", None),
+            "keep_separator": getattr(self.chunker, "keep_separator", None),
+            "chunker_type": type(self.chunker).__name__,
+        }
+        return config
+
+    def create_knowledge_base(self, documents: List[str]) -> UpdateResult:
+        """
+        Create a new knowledge base from documents.
 
         Args:
             documents: List of document texts
 
         Returns:
-            Initial chunks as strings
+            UpdateResult with initial chunks
         """
         if not documents:
-            return []
+            return UpdateResult(
+                num_added=0,
+                new_chunked_doc=ChunkedDocument(chunks=[]),
+            )
 
         # For now, process only the first document
         # TODO: Extend to handle multiple documents
+        if len(documents) > 1:
+            raise NotImplementedError(
+                "KARA currently only supports a single document for processing."
+            )
+
         document = documents[0]
-        chunks = self.chunker.create_chunks(document)
+        chunk_strings = self.chunker.create_chunks(document)
 
-        # Convert string chunks to list of splits for internal representation
-        self._current_chunks = []
-        for chunk in chunks:
+        chunks = []
+        for chunk_str in chunk_strings:
             # Split each chunk back into its component units
-            splits = self.chunker._split_to_units(chunk)
-            self._current_chunks.append(splits)
+            splits = self.chunker._split_to_units(chunk_str)
+            chunks.append(ChunkData.from_splits(splits))
 
-        self._build_chunk_hash_map()
-        return chunks
+        return UpdateResult(
+            num_added=len(chunks),
+            new_chunked_doc=ChunkedDocument(chunks=chunks),
+        )
 
-    def update(self, documents: List[str]) -> UpdateResult:
+    def update_knowledge_base(
+        self, current_kb: ChunkedDocument, documents: List[str]
+    ) -> UpdateResult:
         """
         Update the knowledge base with new documents.
 
         Args:
+            current_kb: Current knowledge base state
             documents: List of updated document texts
 
         Returns:
-            UpdateResult with statistics about the update operation
+            UpdateResult with statistics and new knowledge base
         """
         if not documents:
-            return UpdateResult()
+            return UpdateResult(
+                num_deleted=len(current_kb.chunks),
+                new_chunked_doc=ChunkedDocument(chunks=[]),
+            )
 
         # For now, process only the first document
         # TODO: Extend to handle multiple documents
+        if len(documents) > 1:
+            raise NotImplementedError(
+                "KARA currently only supports a single document for processing."
+            )
+
         document = documents[0]
         new_splits = self.chunker._split_to_units(document)
 
-        new_chunks, result = self._update_chunks(new_splits)
+        return self._update_chunks(current_kb, new_splits)
 
-        self._current_chunks = new_chunks
-        self._build_chunk_hash_map()
-
-        return result
-
-    def get_current_chunks(self) -> List[List[str]]:
-        """Get the current chunks."""
-        return self._current_chunks.copy()
-
-    def _greedy_merge_splits(self, splits: List[str]) -> List[List[str]]:
-        """Greedily merge splits into chunks."""
-
-        def chunk_length(chunk: List[str]) -> int:
-            return sum(len(sub) for sub in chunk)
-
-        result = []
-        current_chunk: List[str] = []
-
-        for split in splits:
-            if chunk_length(current_chunk) + len(split) > self.max_chunk_size:
-                if current_chunk:
-                    result.append(current_chunk)
-                current_chunk = [split]
-            else:
-                current_chunk.append(split)
-
-        if current_chunk:
-            result.append(current_chunk)
-
-        return result
-
-    def _build_chunk_hash_map(self) -> None:
-        """Build a hash map of current chunks."""
-        self._chunk_hashes = {}
-        for chunk in self._current_chunks:
-            chunk_str = "".join(chunk)
-            chunk_hash = hashlib.md5(chunk_str.encode("utf-8")).hexdigest()
-            self._chunk_hashes[chunk_hash] = chunk
-
-    def _update_chunks(self, new_splits: List[str]) -> Tuple[List[List[str]], UpdateResult]:
+    def _update_chunks(self, current_kb: ChunkedDocument, new_splits: List[str]) -> UpdateResult:
         """
         Update chunks using the KARA algorithm.
 
         Args:
+            current_kb: Current knowledge base state
             new_splits: New splits to process
 
         Returns:
-            Tuple of (new_chunks, update_result)
+            UpdateResult with new chunks and statistics
         """
-        old_chunk_hashes = set(self._chunk_hashes.keys())
+        old_chunk_hashes = current_kb.get_chunk_hashes()
 
         N = len(new_splits)
         if N == 0:
-            return [], UpdateResult(num_deleted=len(old_chunk_hashes))
+            return UpdateResult(
+                num_deleted=len(old_chunk_hashes),
+                new_chunked_doc=ChunkedDocument(chunks=[]),
+            )
 
         # Build graph of possible chunks
         edges: List[List[Tuple[int, float, List[str], str]]] = [[] for _ in range(N + 1)]
@@ -217,7 +277,7 @@ class KARAUpdater:
                     heapq.heappush(heap, (new_cost, v))
 
         # Reconstruct the solution
-        new_chunks: List[List[str]] = []
+        new_chunks: List[ChunkData] = []
         result = UpdateResult()
         used_hashes: Set[str] = set()
 
@@ -228,7 +288,8 @@ class KARAUpdater:
                 break
 
             _, edge_cost, chunk_splits, chunk_hash = edge
-            new_chunks.insert(0, chunk_splits)
+            chunk_data = ChunkData.from_splits(chunk_splits)
+            new_chunks.insert(0, chunk_data)
 
             if chunk_hash in old_chunk_hashes:
                 result.num_skipped += 1
@@ -246,4 +307,6 @@ class KARAUpdater:
             if chunk_hash not in used_hashes:
                 result.num_deleted += 1
 
-        return new_chunks, result
+        result.new_chunked_doc = ChunkedDocument(chunks=new_chunks)
+
+        return result

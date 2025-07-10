@@ -82,8 +82,10 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
     def __init__(
         self,
         separators: Optional[List[str]] = None,
-        chunk_size: int = 1000,
-        overlap: int = 0,
+        chunk_size: int = 4000,
+        # TODO: The algorithm currently does not support overlap
+        # This is a placeholder for future implementation
+        # overlap: int = 0,
         keep_separator: bool = True,
     ):
         """
@@ -95,6 +97,7 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
             overlap: Overlap between chunks (not implemented yet)
             keep_separator: Whether to keep separators in the result
         """
+        overlap = 0  # Placeholder for future implementation
         super().__init__(chunk_size=chunk_size, overlap=overlap)
         self.separators = separators or ["\n\n", "\n", " ", ""]
         self.keep_separator = keep_separator
@@ -160,105 +163,6 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
         return [s for s in splits if s]
 
 
-class SimpleCharacterChunker(BaseDocumentChunker):
-    """Simple character chunker that uses a single separator."""
-
-    def __init__(
-        self,
-        separator: str = "\n",
-        chunk_size: int = 1000,
-        overlap: int = 0,
-        keep_separator: bool = True,
-    ):
-        """
-        Initialize the simple character chunker.
-
-        Args:
-            separator: Separator to use for splitting
-            chunk_size: Maximum chunk size in characters
-            overlap: Overlap between chunks (not implemented yet)
-            keep_separator: Whether to keep the separator in the result
-        """
-        super().__init__(chunk_size=chunk_size, overlap=overlap)
-        self.separator = separator
-        self.keep_separator = keep_separator
-
-    def create_chunks(self, text: str) -> List[str]:
-        """
-        Split text into optimally-sized chunks.
-
-        Args:
-            text: Input text to split
-
-        Returns:
-            List of chunks
-        """
-        # First, split into smallest units
-        units = self._split_to_units(text)
-
-        # Then, greedily merge into chunks
-        return self._merge_units_greedy(units, self.chunk_size)
-
-    def _split_to_units(self, text: str) -> List[str]:
-        """Split text into smallest units using the separator."""
-        if self.keep_separator:
-            # Split and keep separator
-            parts = text.split(self.separator)
-            if len(parts) > 1:
-                # Add separator back to all parts except the last one
-                result = []
-                for _i, part in enumerate(parts[:-1]):
-                    result.append(part + self.separator)
-                result.append(parts[-1])  # Last part without separator
-                return [s for s in result if s]
-            else:
-                return parts
-        else:
-            return [s for s in text.split(self.separator) if s]
-
-
-class FixedSizeCharacterChunker(BaseDocumentChunker):
-    """Fixed-size character-based chunker with overlap support."""
-
-    def __init__(self, chunk_size: int = 1000, overlap: int = 0):
-        """
-        Initialize the fixed-size character chunker.
-
-        Args:
-            chunk_size: Size of each chunk in characters
-            overlap: Overlap between chunks in characters
-        """
-        super().__init__(chunk_size=chunk_size, overlap=overlap)
-
-    def create_chunks(self, text: str) -> List[str]:
-        """
-        Split text into fixed-size chunks.
-
-        Args:
-            text: Input text to split
-
-        Returns:
-            List of chunks
-        """
-        if len(text) <= self.chunk_size:
-            return [text]
-
-        chunks = []
-        start = 0
-
-        while start < len(text):
-            end = start + self.chunk_size
-            chunk = text[start:end]
-            chunks.append(chunk)
-            start = end - self.overlap
-
-        return chunks
-
-    def _split_to_units(self, text: str) -> List[str]:
-        """For fixed-size chunker, each character is a unit."""
-        return list(text)
-
-
 class RecursiveTokenChunker(BaseDocumentChunker):
     """
     Token-based chunker that splits text into tokens and merges them greedily.
@@ -279,7 +183,7 @@ class RecursiveTokenChunker(BaseDocumentChunker):
         Args:
             chunk_size: Maximum chunk size in tokens
             overlap: Overlap between chunks in tokens
-            tokenizer_function: Function to tokenize text (defaults to simple split)
+            tokenizer_function: Function to tokenize text
         """
         super().__init__(chunk_size=chunk_size, overlap=overlap)
         self.tokenizer_function = tokenizer_function

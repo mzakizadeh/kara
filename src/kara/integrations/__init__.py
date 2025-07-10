@@ -4,8 +4,8 @@ Framework integrations for kara-py.
 
 # Import integrations only if the required packages are available
 try:
-    from .langchain import KARATextSplitter, LangChainKARAUpdater
+    from .langchain import KARATextSplitter
 
-    __all__ = ["LangChainKARAUpdater", "KARATextSplitter"]
+    __all__ = ["KARATextSplitter"]
 except ImportError:
     __all__ = []

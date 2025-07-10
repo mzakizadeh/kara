@@ -7,144 +7,96 @@ for efficient RAG knowledge base updates using the KARATextSplitter.
 
 try:
     from langchain_core.documents.base import Document
-    from langchain_core.embeddings import FakeEmbeddings
-    from langchain_core.vectorstores import FAISS
 
-    from kara.integrations.langchain import (
-        KARATextSplitter,
-        LangChainKARAUpdater,
-    )
-
-    DEPENDENCIES_AVAILABLE = True
-except ImportError:
-    DEPENDENCIES_AVAILABLE = False
+    from kara.integrations.langchain import KARATextSplitter
+except ImportError as e:
+    raise ImportError(
+        "LangChain is not installed. This module requires LangChain to be installed. "
+        "Please install it with: pip install kara-py[langchain]"
+    ) from e
 
 
 def main() -> None:
-    """Demonstrate LangChain integration with kara-py."""
-    if not DEPENDENCIES_AVAILABLE:
-        print("Error: Missing dependencies. Install with:")
-        print("pip install kara-py[langchain]")
-        return
+    """Demonstrate KARA's efficient document updating."""
 
-    print("kara-py + LangChain Integration Example")
-    print("=" * 40)
+    print("KARA Algorithm Efficiency Demo")
+    print("=" * 30)
 
-    # Sample documents
-    original_text = """
-    Python Programming Basics
-
-    Python is a high-level programming language.
-    It's known for its simplicity and readability.
-
-    Key Features:
-    - Easy to learn syntax
-    - Extensive standard library
-    - Large ecosystem of third-party packages
-    - Cross-platform compatibility
-
-    Common uses include web development, data science,
-    automation, and artificial intelligence.
-    """
-
-    updated_text = """
-    Python Programming Basics
-
-    Python is a high-level, interpreted programming language.
-    It's known for its simplicity, readability, and versatility.
-
-    Key Features:
-    - Easy to learn syntax with English-like keywords
-    - Extensive standard library ("batteries included")
-    - Large ecosystem of third-party packages (PyPI)
-    - Cross-platform compatibility (Windows, Mac, Linux)
-    - Strong community support
-
-    Common uses include web development, data science,
-    automation, artificial intelligence, and machine learning.
-
-    Popular frameworks include Django, Flask, pandas,
-    NumPy, and TensorFlow.
-    """
-
-    # Example 1: Using KARATextSplitter directly (LangChain-compatible)
-    print("1. Using KARATextSplitter (LangChain-compatible)")
-    print("-" * 50)
-
-    kara_splitter = KARATextSplitter(
-        chunk_size=200, epsilon=0.1, separators=["\n\n", "\n", " ", ""]
+    # Initial document
+    original_doc = (
+        "LangChain is an open-source framework built in Python that helps developers create "
+        "applications powered by large language models (LLMs). It allows seamless integration "
+        "between LLMs and external data sources like APIs, files, and databases. With LangChain, "
+        "developers can build dynamic workflows where a language model not only generates text but "
+        "also interacts with tools and environments. This makes it ideal for creating advanced "
+        "chatbots, agents, and AI systems that go beyond static prompting. LangChain provides both "
+        "low-level components for custom logic and high-level abstractions for rapid prototyping, "
+        "making it a versatile toolkit for AI application development.\n\n"
+        "Python is the primary language used with LangChain due to its rich ecosystem and "
+        "simplicity. Python’s popularity in AI and data science makes it a natural fit for "
+        "building with LangChain. Libraries like pydantic, asyncio, and openai integrate smoothly "
+        "with LangChain, enabling developers to quickly build robust, scalable applications. "
+        "Because LangChain supports modularity, developers can extend it using Python’s vast "
+        "collection of libraries. Whether you're building an autonomous agent or a document QA "
+        "tool, Python and LangChain together offer a powerful combination that lowers the barrier "
+        "for building intelligent, interactive systems."
     )
 
-    # Initial split
-    initial_chunks = kara_splitter.split_text(original_text)
-    print(f"   Initial chunks: {len(initial_chunks)}")
-
-    # Update with new text
-    update_result = kara_splitter.update_text(updated_text)
-    updated_chunks = kara_splitter.split_text(updated_text)
-
-    print(f"   Updated chunks: {len(updated_chunks)}")
-    print(f"   Efficiency: {update_result.efficiency_ratio:.1%}")
-    print(f"   Added: {update_result.num_added}, Reused: {update_result.num_skipped}")
-
-    # Example 2: Using with LangChain Documents
-    print("\n2. Using with LangChain Documents")
-    print("-" * 50)
-
-    original_docs = [
-        Document(
-            page_content=original_text,
-            metadata={"source": "python_guide.txt", "version": "1.0"},
-        )
-    ]
-
-    updated_docs = [
-        Document(
-            page_content=updated_text,
-            metadata={"source": "python_guide.txt", "version": "2.0"},
-        )
-    ]
-
-    # Split documents
-    split_docs = kara_splitter.split_documents(original_docs)
-    print(f"   Split documents: {len(split_docs)}")
-
-    # Example 3: Full integration with vector store
-    print("\n3. Full integration with vector store")
-    print("-" * 50)
-
-    updater = LangChainKARAUpdater(
-        vectorstore_class=FAISS,
-        embeddings=FakeEmbeddings(size=100),
-        chunk_size=200,
-        epsilon=0.1,
+    # Updated document (added content at the end)
+    updated_doc = (
+        "LangChain is an open-source framework built in Python that helps developers create "
+        "applications powered by large language models (LLMs). It allows seamless integration "
+        "between LLMs and external data sources like APIs, files, and databases. With LangChain, "
+        "developers can build dynamic workflows where a language model not only generates text but "
+        "also interacts with tools and environments. Developers can define step-by-step workflows "
+        "in which an LLM can retrieve data, call APIs, and act based on context. This flexibility "
+        "allows LangChain to support everything from basic assistants to complex, multi-step "
+        "agents capable of reasoning and memory retention.\n\n"
+        "Python is the primary language used with LangChain due to its rich ecosystem and "
+        "simplicity. Python’s popularity in AI and data science makes it a natural fit for "
+        "building with LangChain. Libraries like pydantic, asyncio, and openai integrate smoothly "
+        "with LangChain, enabling developers to quickly build robust, scalable applications. "
+        "Because LangChain supports modularity, developers can extend it using Python’s vast "
+        "collection of libraries. Whether you're building an autonomous agent or a document QA "
+        "tool, Python and LangChain together offer a powerful combination that lowers the barrier "
+        "for building intelligent, interactive systems."
     )
 
-    # Initialize
-    init_result: dict[str, int] = updater.initialize_documents(original_docs)
-    print(f"   Initialized: {init_result}")
+    # Initialize KARA splitter
+    splitter = KARATextSplitter(chunk_size=50, epsilon=0.1)
 
-    # Update
-    vectorstore_update_result: dict[str, int] = updater.update_documents(updated_docs)
-    print(f"   Updated: {vectorstore_update_result}")
+    # Process original document
+    print("1. Processing original document:")
+    original_chunks = splitter.split_text(original_doc)
+    print(f"   Created {len(original_chunks)} chunks")
+    for i, chunk in enumerate(original_chunks, 1):
+        print(f"   Chunk {i}: '{chunk.strip()}'")
 
-    # Test similarity search
-    vectorstore = updater.get_vectorstore()
-    if vectorstore:
-        results = updater.similarity_search("Python features", k=2)
-        print(f"   Search results: {len(results)} documents")
+    # Process updated document (KARA reuses existing chunks)
+    print("\n2. Processing updated document:")
+    updated_chunks = splitter.split_text(updated_doc)
+    print(f"   Result: {len(updated_chunks)} chunks")
+    for i, chunk in enumerate(updated_chunks, 1):
+        # Check if this chunk existed before
+        is_reused = chunk in original_chunks
+        status = " (reused)" if is_reused else " (new)"
+        print(f"   Chunk {i}: '{chunk.strip()}'{status}")
 
-    # Get efficiency stats from the text splitter
-    text_splitter = updater.get_text_splitter()
-    stats = text_splitter.get_efficiency_stats()
-    print(f"   Efficiency stats: {stats}")
+    # Show efficiency
+    reused_count = sum(1 for chunk in updated_chunks if chunk in original_chunks)
+    efficiency = (reused_count / len(updated_chunks)) * 100
+    print(
+        f"\n3. Efficiency: {reused_count}/{len(updated_chunks)} chunks reused ({efficiency:.0f}%)"
+    )
 
-    print("\nBenefits of KARATextSplitter:")
-    print("- Drop-in replacement for LangChain text splitters")
-    print("- Maintains full LangChain compatibility")
-    print("- Efficient chunk updates with KARA algorithm")
-    print("- Easy integration with existing LangChain workflows")
-    print("- Preserves document metadata and structure")
+    # Demonstrate with LangChain Documents
+    print("\n4. Using with LangChain Documents:")
+    docs = [Document(page_content=updated_doc, metadata={"version": "2.0"})]
+    chunked_docs = splitter.split_documents(docs)
+    print(f"   Split into {len(chunked_docs)} Document objects")
+    print(f"   Each preserves metadata: {chunked_docs[0].metadata}")
+
+    print("\nKARA minimizes re-embedding by reusing unchanged chunks!")
 
 
 if __name__ == "__main__":

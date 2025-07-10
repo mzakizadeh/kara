@@ -12,10 +12,8 @@ __email__ = "your.email@example.com"
 from .core import KARAUpdater, UpdateResult
 from .splitters import (
     BaseDocumentChunker,
-    FixedSizeCharacterChunker,
     RecursiveCharacterChunker,
     RecursiveTokenChunker,
-    SimpleCharacterChunker,
 )
 
 __all__ = [
