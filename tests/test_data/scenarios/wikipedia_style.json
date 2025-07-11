@@ -1,0 +1,32 @@
+{
+    "name": "Wikipedia Style Update",
+    "description": "Real-world scenario based on Wikipedia article updates",
+    "test_type": "realistic",
+    "initial_text": "Machine learning (ML) is a type of artificial intelligence.\n\n== History ==\nMachine learning has its roots in statistics and computer science.\nThe term was coined in 1959 by Arthur Samuel.\n\n== Types ==\nThere are three main types of machine learning:\n* Supervised learning\n* Unsupervised learning\n* Reinforcement learning\n\n=== Supervised Learning ===\nSupervised learning uses labeled training data.\nCommon algorithms include linear regression and decision trees.\n\n=== Unsupervised Learning ===\nUnsupervised learning finds patterns in unlabeled data.\nClustering and dimensionality reduction are common techniques.\n\n== Applications ==\nMachine learning is used in many fields:\n* Computer vision\n* Natural language processing\n* Recommendation systems\n* Autonomous vehicles",
+    "updated_text": "Machine learning (ML) is a type of artificial intelligence (AI).\n\n== History ==\nMachine learning has its roots in statistics, computer science, and mathematics.\nThe term was coined in 1959 by Arthur Samuel at IBM.\nEarly developments included neural networks and decision trees.\n\n== Types ==\nThere are four main types of machine learning:\n* Supervised learning\n* Unsupervised learning\n* Reinforcement learning\n* Semi-supervised learning\n\n=== Supervised Learning ===\nSupervised learning uses labeled training data to learn patterns.\nCommon algorithms include linear regression, decision trees, and neural networks.\nIt's widely used for classification and regression tasks.\n\n=== Unsupervised Learning ===\nUnsupervised learning finds patterns in unlabeled data.\nClustering and dimensionality reduction are common techniques.\nExamples include k-means clustering and principal component analysis.\n\n=== Reinforcement Learning ===\nReinforcement learning learns through interaction with an environment.\nIt uses rewards and penalties to improve decision-making.\nApplications include game playing and robotics.\n\n== Applications ==\nMachine learning is used in many fields:\n* Computer vision and image recognition\n* Natural language processing and chatbots\n* Recommendation systems for e-commerce\n* Autonomous vehicles and robotics\n* Healthcare diagnostics\n* Financial fraud detection",
+    "parameters": {
+        "chunk_size": 100,
+        "epsilon": 0.1,
+        "separators": [
+            "\n\n",
+            "\n",
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "min_reused_chunks": 0,
+        "efficiency_ratio_threshold": 0.0,
+        "total_chunks_range": [
+            8,
+            20
+        ],
+        "new_chunks_expected": true
+    },
+    "tags": [
+        "realistic",
+        "wikipedia",
+        "comprehensive",
+        "single_doc"
+    ]
+}

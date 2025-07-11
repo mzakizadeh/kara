@@ -1,0 +1,24 @@
+{
+    "name": "Very Small Chunks",
+    "description": "Testing with very small chunk sizes",
+    "test_type": "edge_case",
+    "initial_text": "Testing very small chunk sizes with this text.",
+    "updated_text": "Testing very small chunk sizes with this modified text.",
+    "parameters": {
+        "chunk_size": 5,
+        "epsilon": 0,
+        "separators": [
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {},
+    "expected_exception": "AssertionError",
+    "expected_exception_message": "Split length 8 exceeds max chunk size 5.",
+    "expect_failure": true,
+    "tags": [
+        "edge_case",
+        "small_chunks",
+        "single_doc"
+    ]
+}

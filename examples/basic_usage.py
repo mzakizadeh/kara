@@ -14,9 +14,7 @@ def demo_character_chunking() -> None:
     print("=== Character-based Chunking ===")
 
     # Create document chunker
-    chunker = RecursiveCharacterChunker(
-        chunk_size=100, overlap=20, separators=["\n\n", "\n", " ", ""]
-    )
+    chunker = RecursiveCharacterChunker(chunk_size=100, separators=["\n\n", "\n", " "])
 
     # Initialize KARA updater
     updater = KARAUpdater(
@@ -37,7 +35,9 @@ where documents are frequently updated."""
     print(f"Original text length: {len(original_text)} characters")
 
     # Initialize with the original document
-    initial_chunks = updater.initialize([original_text])
+    initial_result = updater.create_knowledge_base([original_text])
+    assert initial_result.new_chunked_doc is not None
+    initial_chunks = [chunk.content for chunk in initial_result.new_chunked_doc.chunks]
     print(f"Initial chunks created: {len(initial_chunks)}")
 
     for i, chunk in enumerate(initial_chunks, 1):
@@ -55,7 +55,7 @@ and only creating new chunks for the added content."""
 
     print(f"\nUpdated text length: {len(updated_text)} characters")
 
-    result = updater.update([updated_text])
+    result = updater.update_knowledge_base(initial_result.new_chunked_doc, [updated_text])
     print("\nUpdate results:")
     print(f"- Chunks added: {result.num_added}")
     print(f"- Chunks reused: {result.num_reused}")
@@ -92,7 +92,9 @@ machine learning techniques."""
     print(f"Token count: {token_count}")
 
     # Initialize with the original document
-    initial_chunks = updater.initialize([original_text])
+    initial_result = updater.create_knowledge_base([original_text])
+    assert initial_result.new_chunked_doc is not None
+    initial_chunks = [chunk.content for chunk in initial_result.new_chunked_doc.chunks]
     print(f"Initial chunks created: {len(initial_chunks)}")
 
     for i, chunk in enumerate(initial_chunks, 1):
@@ -111,7 +113,7 @@ interactions with environments."""
     updated_token_count = len(updated_text.split())
     print(f"Updated token count: {updated_token_count}")
 
-    result = updater.update([updated_text])
+    result = updater.update_knowledge_base(initial_result.new_chunked_doc, [updated_text])
     print("\nUpdate results:")
     print(f"- Chunks added: {result.num_added}")
     print(f"- Chunks reused: {result.num_reused}")
@@ -154,7 +156,9 @@ possibilities for automation and innovation."""
 
     print(f"Original text: {text}")
 
-    chunks = updater.initialize([text])
+    result = updater.create_knowledge_base([text])
+    assert result.new_chunked_doc is not None
+    chunks = [chunk.content for chunk in result.new_chunked_doc.chunks]
     print(f"Sentence-based chunks: {len(chunks)}")
 
     for i, chunk in enumerate(chunks, 1):
@@ -182,20 +186,28 @@ def demo_kara_with_different_chunkers() -> None:
     print(f"Updated text: {updated_text}")
 
     print("\nCharacter-based KARA:")
-    char_chunks = char_updater.initialize([original_text])
+    char_result_initial = char_updater.create_knowledge_base([original_text])
+    assert char_result_initial.new_chunked_doc is not None
+    char_chunks = [chunk.content for chunk in char_result_initial.new_chunked_doc.chunks]
     print(f"Initial chunks: {len(char_chunks)}")
 
-    char_result = char_updater.update([updated_text])
+    char_result = char_updater.update_knowledge_base(
+        char_result_initial.new_chunked_doc, [updated_text]
+    )
     print(
         f"Update result: {char_result.num_added} added, "
         f"{char_result.num_reused} skipped, {char_result.num_deleted} deleted"
     )
 
     print("\nToken-based KARA:")
-    token_chunks = token_updater.initialize([original_text])
+    token_result_initial = token_updater.create_knowledge_base([original_text])
+    assert token_result_initial.new_chunked_doc is not None
+    token_chunks = [chunk.content for chunk in token_result_initial.new_chunked_doc.chunks]
     print(f"Initial chunks: {len(token_chunks)}")
 
-    token_result = token_updater.update([updated_text])
+    token_result = token_updater.update_knowledge_base(
+        token_result_initial.new_chunked_doc, [updated_text]
+    )
     print(
         f"Update result: {token_result.num_added} added, "
         f"{token_result.num_reused} skipped, {token_result.num_deleted} deleted"
@@ -209,7 +221,7 @@ def demo_advanced_chunking_strategies() -> None:
     # Demonstrate recursive character chunking with different separators
     print("1. Recursive Character Chunking with Custom Separators")
     chunker = RecursiveCharacterChunker(
-        chunk_size=100, separators=["\n\n", "\n", " ", ""], keep_separator=True
+        chunk_size=100, separators=["\n\n", "\n", " "], keep_separator=True
     )
 
     text = """This is a sample document.

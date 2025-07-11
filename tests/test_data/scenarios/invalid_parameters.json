@@ -1,0 +1,24 @@
+{
+    "name": "Invalid Parameters",
+    "description": "Test scenario with invalid chunk size that should raise an exception",
+    "test_type": "edge_case",
+    "initial_text": "This text will not be processed due to invalid parameters.",
+    "updated_text": "This text will also not be processed.",
+    "parameters": {
+        "chunk_size": -1,
+        "epsilon": 0.1,
+        "separators": [
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {},
+    "expected_exception": "ValueError",
+    "expected_exception_message": "chunk_size must be positive",
+    "expect_failure": true,
+    "tags": [
+        "edge_case",
+        "exception",
+        "invalid_params"
+    ]
+}

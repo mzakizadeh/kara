@@ -1,0 +1,31 @@
+{
+    "name": "Different Separators - Sentence Based",
+    "description": "Testing with sentence-based separators",
+    "test_type": "single_document",
+    "initial_text": "Machine learning algorithms are becoming more sophisticated! Artificial intelligence is rapidly evolving. Deep learning has revolutionized computer vision? Natural language processing enables human-computer interaction.",
+    "updated_text": "Artificial intelligence is rapidly evolving. Machine learning algorithms are becoming more sophisticated and efficient! Deep learning has revolutionized computer vision? Natural language processing enables seamless human-computer interaction.",
+    "parameters": {
+        "chunk_size": 80,
+        "epsilon": 0,
+        "separators": [
+            ". ",
+            "! ",
+            "? "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "min_reused_chunks": 2,
+        "efficiency_ratio_threshold": 0.5,
+        "total_chunks_range": [
+            4,
+            4
+        ],
+        "new_chunks_expected": true
+    },
+    "tags": [
+        "separators",
+        "sentence",
+        "single_doc"
+    ]
+}

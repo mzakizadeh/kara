@@ -204,7 +204,7 @@ class KARAUpdater:
             )
 
         # Process each document separately and combine results
-        all_new_chunks = []
+        all_new_chunks: List[ChunkData] = []
         combined_result = UpdateResult()
         old_chunk_hashes = current_kb.get_chunk_hashes()
         used_hashes: Set[str] = set()
@@ -215,6 +215,7 @@ class KARAUpdater:
                 current_kb, new_splits, doc_id, old_chunk_hashes
             )
 
+            assert doc_result.new_chunked_doc is not None
             all_new_chunks.extend(doc_result.new_chunked_doc.chunks)
             combined_result.num_added += doc_result.num_added
             combined_result.num_reused += doc_result.num_reused
@@ -273,7 +274,12 @@ class KARAUpdater:
                     chunk_splits.append(split)
                     current_length += len(split)
 
-                # TODO: handle the edge case in which all splits are larger than max_chunk_size
+                    # A single split cannot exceed the max chunk size
+                    # TODO: handle the edge case in which all splits are larger than max_chunk_size
+                    assert len(split) <= self.max_chunk_size, (
+                        f"Split length {len(split)} exceeds max chunk size {self.max_chunk_size}."
+                    )
+
                 if current_length > self.max_chunk_size:
                     break
 
@@ -354,6 +360,7 @@ class KARAUpdater:
 
         # Count deleted chunks that are not reused
         used_hashes: Set[str] = set()
+        assert doc_result.new_chunked_doc is not None
         for chunk in doc_result.new_chunked_doc.chunks:
             if chunk.hash in old_chunk_hashes:
                 used_hashes.add(chunk.hash)

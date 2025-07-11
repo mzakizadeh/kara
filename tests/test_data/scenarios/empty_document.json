@@ -1,0 +1,31 @@
+{
+    "name": "Empty Document",
+    "description": "Testing with empty initial or updated documents",
+    "test_type": "edge_case",
+    "initial_text": "",
+    "updated_text": "New content added to previously empty document.",
+    "parameters": {
+        "chunk_size": 30,
+        "epsilon": 0.1,
+        "separators": [
+            "\n\n",
+            "\n",
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "min_reused_chunks": 0,
+        "efficiency_ratio_threshold": 0.0,
+        "total_chunks_range": [
+            1,
+            3
+        ],
+        "new_chunks_expected": true
+    },
+    "tags": [
+        "edge_case",
+        "empty",
+        "single_doc"
+    ]
+}

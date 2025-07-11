@@ -1,0 +1,33 @@
+{
+    "name": "Small Change Low Epsilon",
+    "description": "Small change with low epsilon should prefer reusing chunks",
+    "test_type": "single_document",
+    "initial_text": "The weather is sunny today. It's a beautiful day for a walk.",
+    "updated_text": "The weather is sunny today. It's a beautiful day for a hike.",
+    "parameters": {
+        "chunk_size": 20,
+        "epsilon": 0.01,
+        "separators": [
+            "\n\n",
+            "\n",
+            ". ",
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "min_reused_chunks": 1,
+        "efficiency_ratio_threshold": 0.4,
+        "total_chunks_range": [
+            2,
+            4
+        ],
+        "new_chunks_expected": true
+    },
+    "tags": [
+        "epsilon",
+        "low",
+        "small_change",
+        "single_doc"
+    ]
+}

@@ -1,0 +1,29 @@
+{
+    "name": "Empty Document Exception",
+    "description": "Test scenario with empty documents that might cause issues",
+    "test_type": "edge_case",
+    "initial_text": "",
+    "updated_text": "",
+    "parameters": {
+        "chunk_size": 10,
+        "epsilon": 0.1,
+        "separators": [
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "min_reused_chunks": 0,
+        "efficiency_ratio_threshold": 0.0,
+        "total_chunks_range": [
+            0,
+            1
+        ]
+    },
+    "expect_failure": false,
+    "tags": [
+        "edge_case",
+        "empty",
+        "single_doc"
+    ]
+}

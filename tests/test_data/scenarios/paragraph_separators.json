@@ -1,0 +1,31 @@
+{
+    "name": "Different Separators - Paragraph Based",
+    "description": "Testing with paragraph-based separators",
+    "test_type": "single_document",
+    "initial_text": "First paragraph about machine learning fundamentals.\n\nSecond paragraph discussing neural networks.\n\nThird paragraph covering applications.",
+    "updated_text": "First paragraph about machine learning fundamentals and core concepts.\n\nSecond paragraph discussing neural networks.\n\nThird paragraph covering applications.\n\nFourth paragraph about future developments.",
+    "parameters": {
+        "chunk_size": 80,
+        "epsilon": 0.1,
+        "separators": [
+            "\n\n",
+            "\n",
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "min_reused_chunks": 0,
+        "efficiency_ratio_threshold": 0.0,
+        "total_chunks_range": [
+            3,
+            6
+        ],
+        "new_chunks_expected": true
+    },
+    "tags": [
+        "separators",
+        "paragraph",
+        "single_doc"
+    ]
+}

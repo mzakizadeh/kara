@@ -1,0 +1,31 @@
+{
+    "name": "Very Large Chunks",
+    "description": "Testing with chunk size larger than document",
+    "test_type": "edge_case",
+    "initial_text": "Short text.",
+    "updated_text": "Short modified text.",
+    "parameters": {
+        "chunk_size": 1000,
+        "epsilon": 0.1,
+        "separators": [
+            "\n\n",
+            "\n",
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "min_reused_chunks": 0,
+        "efficiency_ratio_threshold": 0.0,
+        "total_chunks_range": [
+            1,
+            1
+        ],
+        "new_chunks_expected": true
+    },
+    "tags": [
+        "edge_case",
+        "large_chunks",
+        "single_doc"
+    ]
+}

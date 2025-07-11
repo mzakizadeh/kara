@@ -1,0 +1,45 @@
+{
+    "name": "Multi Document - All Changed",
+    "description": "Multiple documents where all are modified",
+    "test_type": "multi_document",
+    "initial_documents": [
+        "AI is transforming industries.",
+        "Machine learning enables automation.",
+        "Data science drives insights."
+    ],
+    "updated_documents": [
+        "Artificial intelligence is transforming various industries rapidly.",
+        "Machine learning algorithms enable intelligent automation systems.",
+        "Data science methodologies drive actionable business insights."
+    ],
+    "parameters": {
+        "chunk_size": 25,
+        "epsilon": 0.05,
+        "separators": [
+            "\n\n",
+            "\n",
+            ". ",
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "min_reused_chunks": 0,
+        "efficiency_ratio_threshold": 0.0,
+        "total_chunks_range": [
+            6,
+            15
+        ],
+        "documents_unchanged": [],
+        "documents_changed": [
+            0,
+            1,
+            2
+        ]
+    },
+    "tags": [
+        "multi_doc",
+        "complete_change",
+        "expansion"
+    ]
+}

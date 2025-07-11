@@ -1,0 +1,46 @@
+{
+    "name": "Multi Document - One Changed",
+    "description": "Multiple documents where only one is modified",
+    "test_type": "multi_document",
+    "initial_documents": [
+        "Document 1: Introduction to machine learning concepts and basic algorithms.",
+        "Document 2: Deep learning architectures including neural networks and transformers.",
+        "Document 3: Natural language processing applications and techniques."
+    ],
+    "updated_documents": [
+        "Document 1: Introduction to machine learning concepts and basic algorithms.",
+        "Document 2: Deep learning architectures including neural networks, transformers, and attention mechanisms.",
+        "Document 3: Natural language processing applications and techniques."
+    ],
+    "parameters": {
+        "chunk_size": 40,
+        "epsilon": 0.1,
+        "separators": [
+            "\n\n",
+            "\n",
+            ". ",
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "min_reused_chunks": 2,
+        "efficiency_ratio_threshold": 0.5,
+        "total_chunks_range": [
+            3,
+            8
+        ],
+        "documents_unchanged": [
+            0,
+            2
+        ],
+        "documents_changed": [
+            1
+        ]
+    },
+    "tags": [
+        "multi_doc",
+        "partial_change",
+        "efficiency"
+    ]
+}
