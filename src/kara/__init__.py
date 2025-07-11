@@ -5,9 +5,14 @@ A Python library for efficient updates to RAG knowledge bases,
 minimizing embedding operations through intelligent chunk reuse.
 """
 
-__version__ = "0.1.0"
-__author__ = "Your Name"
-__email__ = "your.email@example.com"
+try:
+    from ._version import __version__
+except ImportError:
+    # Fallback for development installs without setuptools-scm
+    __version__ = "0.0.0+unknown"
+
+__author__ = "Mahdi Zakizadeh"
+__email__ = "mzakizadeh.me@gmail.com"
 
 from .core import KARAUpdater, UpdateResult
 from .splitters import (

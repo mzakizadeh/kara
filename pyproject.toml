@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=77.0.3"]
+requires = ["setuptools>=77.0.3", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "kara-toolkit"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Knowledge-Aware Re-embedding Algorithm - Efficient RAG knowledge base updates"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -98,3 +98,8 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "--cov=kara --cov-report=html --cov-report=term-missing"
+
+[tool.setuptools_scm]
+write_to = "src/kara/_version.py"
+version_scheme = "release-branch-semver"
+local_scheme = "no-local-version"
