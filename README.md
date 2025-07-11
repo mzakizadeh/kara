@@ -33,7 +33,7 @@ print(f"Efficiency: {result.efficiency_ratio:.1%}")
 
 ## How It Works
 
-KARA splits documents into chunks and uses dynamic programming to find the optimal way to reuse existing chunks when content is updated, reducing embedding operations by up to 70%.
+KARA formulates the chunking problem as a DAG (Directed Acyclic Graph) for a single document where each node represents a position in the document splits, and edges represent possible chunks. It then uses Dijkstra's algorithm to find the optimal chunking path.
 
 ## Examples
 
