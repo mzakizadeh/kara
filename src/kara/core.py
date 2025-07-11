@@ -88,8 +88,7 @@ class UpdateResult:
     """Result of a KARA update operation."""
 
     num_added: int = 0
-    num_updated: int = 0
-    num_skipped: int = 0
+    num_reused: int = 0
     num_deleted: int = 0
     new_chunked_doc: Optional["ChunkedDocument"] = None
 
@@ -97,21 +96,20 @@ class UpdateResult:
         """Add two UpdateResult objects."""
         return UpdateResult(
             num_added=self.num_added + other.num_added,
-            num_updated=self.num_updated + other.num_updated,
-            num_skipped=self.num_skipped + other.num_skipped,
+            num_reused=self.num_reused + other.num_reused,
             num_deleted=self.num_deleted + other.num_deleted,
         )
 
     @property
     def total_operations(self) -> int:
         """Total number of operations performed."""
-        return self.num_added + self.num_updated + self.num_deleted
+        return self.num_added + self.num_deleted
 
     @property
     def efficiency_ratio(self) -> float:
         """Ratio of skipped operations to total operations."""
-        total = self.num_added + self.num_updated + self.num_skipped + self.num_deleted
-        return self.num_skipped / total if total > 0 else 0.0
+        total_chunks = len(self.new_chunked_doc.chunks) if self.new_chunked_doc else 0
+        return self.num_reused / total_chunks if total_chunks > 0 else 0.0
 
 
 class KARAUpdater:
@@ -219,7 +217,7 @@ class KARAUpdater:
 
             all_new_chunks.extend(doc_result.new_chunked_doc.chunks)
             combined_result.num_added += doc_result.num_added
-            combined_result.num_skipped += doc_result.num_skipped
+            combined_result.num_reused += doc_result.num_reused
 
             # Track which hashes are used across all documents
             for chunk in doc_result.new_chunked_doc.chunks:
@@ -275,6 +273,7 @@ class KARAUpdater:
                     chunk_splits.append(split)
                     current_length += len(split)
 
+                # TODO: handle the edge case in which all splits are larger than max_chunk_size
                 if current_length > self.max_chunk_size:
                     break
 
@@ -324,7 +323,7 @@ class KARAUpdater:
             new_chunks.insert(0, chunk_data)
 
             if chunk_hash in old_chunk_hashes:
-                result.num_skipped += 1
+                result.num_reused += 1
             else:
                 result.num_added += 1
 

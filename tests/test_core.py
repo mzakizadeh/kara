@@ -61,25 +61,24 @@ class TestUpdateResult:
 
     def test_addition(self) -> None:
         """Test adding two UpdateResult objects."""
-        result1 = UpdateResult(num_added=5, num_updated=2, num_skipped=10, num_deleted=3)
-        result2 = UpdateResult(num_added=3, num_updated=1, num_skipped=7, num_deleted=2)
+        result1 = UpdateResult(num_added=5, num_reused=10, num_deleted=3)
+        result2 = UpdateResult(num_added=3, num_reused=7, num_deleted=2)
 
         combined = result1 + result2
 
         assert combined.num_added == 8
-        assert combined.num_updated == 3
-        assert combined.num_skipped == 17
+        assert combined.num_reused == 17
         assert combined.num_deleted == 5
 
     def test_total_operations(self) -> None:
         """Test total operations calculation."""
-        result = UpdateResult(num_added=5, num_updated=2, num_skipped=10, num_deleted=3)
+        result = UpdateResult(num_added=5, num_reused=10, num_deleted=3)
 
         assert result.total_operations == 10  # added + updated + deleted
 
     def test_efficiency_ratio(self) -> None:
         """Test efficiency ratio calculation."""
-        result = UpdateResult(num_added=5, num_updated=2, num_skipped=10, num_deleted=3)
+        result = UpdateResult(num_added=5, num_reused=10, num_deleted=3)
 
         expected_ratio = 10 / 20  # skipped / total
         assert result.efficiency_ratio == expected_ratio
@@ -133,7 +132,7 @@ class TestKARAUpdater:
 
         assert isinstance(result, UpdateResult)
         assert result.num_added >= 0
-        assert result.num_skipped >= 0
+        assert result.num_reused >= 0
         assert result.num_deleted >= 0
         assert result.new_chunked_doc is not None
         assert isinstance(result.new_chunked_doc, ChunkedDocument)
@@ -157,7 +156,7 @@ class TestKARAUpdater:
         result_high = updater_high.update_knowledge_base(kb_high, [sample_text])  # Same text
 
         # Low epsilon should reuse more chunks
-        assert result_low.num_skipped >= result_high.num_skipped
+        assert result_low.num_reused >= result_high.num_reused
 
     def test_empty_documents(self) -> None:
         """Test with empty documents."""
@@ -175,8 +174,7 @@ class TestKARAUpdater:
         result = updater.update_knowledge_base(kb, [])
         assert isinstance(result, UpdateResult)
         assert result.num_added == 0
-        assert result.num_updated == 0
-        assert result.num_skipped == 0
+        assert result.num_reused == 0
         assert result.num_deleted == 0
 
     def test_stateless_operation(self, sample_text: str) -> None:
@@ -202,7 +200,7 @@ class TestKARAUpdater:
         result2 = updater.update_knowledge_base(kb2, [sample_text])  # Same as original
 
         # kb2 update should have high reuse since it's the same content
-        assert result2.num_skipped > result1.num_skipped
+        assert result2.num_reused > result1.num_reused
 
     def test_wikipedia_scenario(
         self, wikipedia_style_text: str, updated_wikipedia_text: str

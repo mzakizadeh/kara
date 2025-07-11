@@ -58,7 +58,7 @@ and only creating new chunks for the added content."""
     result = updater.update([updated_text])
     print("\nUpdate results:")
     print(f"- Chunks added: {result.num_added}")
-    print(f"- Chunks reused: {result.num_skipped}")
+    print(f"- Chunks reused: {result.num_reused}")
     print(f"- Chunks deleted: {result.num_deleted}")
     print(f"- Efficiency ratio: {result.efficiency_ratio:.2%}")
 
@@ -114,7 +114,7 @@ interactions with environments."""
     result = updater.update([updated_text])
     print("\nUpdate results:")
     print(f"- Chunks added: {result.num_added}")
-    print(f"- Chunks reused: {result.num_skipped}")
+    print(f"- Chunks reused: {result.num_reused}")
     print(f"- Chunks deleted: {result.num_deleted}")
     print(f"- Efficiency ratio: {result.efficiency_ratio:.2%}")
 
@@ -188,7 +188,7 @@ def demo_kara_with_different_chunkers() -> None:
     char_result = char_updater.update([updated_text])
     print(
         f"Update result: {char_result.num_added} added, "
-        f"{char_result.num_skipped} skipped, {char_result.num_deleted} deleted"
+        f"{char_result.num_reused} skipped, {char_result.num_deleted} deleted"
     )
 
     print("\nToken-based KARA:")
@@ -198,7 +198,7 @@ def demo_kara_with_different_chunkers() -> None:
     token_result = token_updater.update([updated_text])
     print(
         f"Update result: {token_result.num_added} added, "
-        f"{token_result.num_skipped} skipped, {token_result.num_deleted} deleted"
+        f"{token_result.num_reused} skipped, {token_result.num_deleted} deleted"
     )
 
 

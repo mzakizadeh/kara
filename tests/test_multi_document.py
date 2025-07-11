@@ -26,8 +26,7 @@ class TestMultiDocumentSupport:
         result = updater.create_knowledge_base([])
 
         assert result.num_added == 0
-        assert result.num_updated == 0
-        assert result.num_skipped == 0
+        assert result.num_reused == 0
         assert result.num_deleted == 0
         assert len(result.new_chunked_doc.chunks) == 0
         assert len(result.new_chunked_doc.get_document_ids()) == 0
@@ -77,7 +76,7 @@ class TestMultiDocumentSupport:
         result = updater.update_knowledge_base(empty_kb, documents)
 
         assert result.num_added > 0
-        assert result.num_skipped == 0
+        assert result.num_reused == 0
         assert result.num_deleted == 0
         assert len(result.new_chunked_doc.get_document_ids()) == 2
 
@@ -96,7 +95,7 @@ class TestMultiDocumentSupport:
         update_result = updater.update_knowledge_base(initial_result.new_chunked_doc, updated_docs)
 
         # Should have some reused chunks from first document
-        assert update_result.num_skipped > 0
+        assert update_result.num_reused > 0
         # Should have new chunks from modified second document
         assert update_result.num_added > 0
         # Some old chunks should be deleted
@@ -118,7 +117,7 @@ class TestMultiDocumentSupport:
         update_result = updater.update_knowledge_base(initial_result.new_chunked_doc, updated_docs)
 
         # Should reuse existing chunks and add new ones
-        assert update_result.num_skipped > 0  # Reused from first 2 docs
+        assert update_result.num_reused > 0  # Reused from first 2 docs
         assert update_result.num_added > 0  # New chunks from 3rd doc
         assert len(update_result.new_chunked_doc.get_document_ids()) == 3
 
@@ -137,7 +136,7 @@ class TestMultiDocumentSupport:
         update_result = updater.update_knowledge_base(initial_result.new_chunked_doc, updated_docs)
 
         # Should reuse chunks from first 2 docs and delete chunks from 3rd
-        assert update_result.num_skipped > 0  # Reused from first 2 docs
+        assert update_result.num_reused > 0  # Reused from first 2 docs
         assert update_result.num_deleted > 0  # Deleted from 3rd doc
         assert len(update_result.new_chunked_doc.get_document_ids()) == 2
 
