@@ -1,5 +1,5 @@
 """
-LangChain integration for kara-py.
+LangChain integration for kara-toolkit.
 """
 
 from typing import Any, List, Optional
@@ -9,7 +9,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "LangChain is not installed. This module requires LangChain to be installed. "
-        "Please install it with: pip install kara-py[langchain]"
+        "Please install it with: pip install kara-toolkit[langchain]"
     ) from e
 
 from ..core import ChunkedDocument, KARAUpdater

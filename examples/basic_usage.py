@@ -1,5 +1,5 @@
 """
-Basic usage example of kara-py.
+Basic usage example of kara-toolkit.
 
 This example demonstrates the core functionality of the KARA algorithm
 for efficient document chunk updates, including both character-based
@@ -258,8 +258,8 @@ for the purpose of achieving human-like language processing for a range of tasks
 
 
 def main() -> None:
-    """Demonstrate comprehensive kara-py usage with different chunking strategies."""
-    print("kara-py Comprehensive Usage Example")
+    """Demonstrate comprehensive kara-toolkit usage with different chunking strategies."""
+    print("kara-toolkit Comprehensive Usage Example")
     print("=" * 50)
 
     demo_character_chunking()

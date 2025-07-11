@@ -3,7 +3,7 @@ requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kara-py"
+name = "kara-toolkit"
 version = "0.1.0"
 description = "Knowledge-Aware Re-embedding Algorithm - Efficient RAG knowledge base updates"
 readme = "README.md"
@@ -48,13 +48,13 @@ dev = [
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
 ]
-all = ["kara-py[langchain,dev]"]
+all = ["kara-toolkit[langchain,dev]"]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/kara-py"
-Repository = "https://github.com/yourusername/kara-py"
-Documentation = "https://kara-py.readthedocs.io"
-"Bug Tracker" = "https://github.com/yourusername/kara-py/issues"
+Homepage = "https://github.com/mzakizadeh/kara"
+Repository = "https://github.com/mzakizadeh/kara"
+Documentation = "https://kara-toolkit.readthedocs.io"
+"Bug Tracker" = "https://github.com/mzakizadeh/kara-toolkit/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -83,7 +83,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.ruff.lint.isort]
-known-first-party = ["kara-py"]
+known-first-party = ["kara-toolkit"]
 
 [tool.mypy]
 python_version = "3.9"

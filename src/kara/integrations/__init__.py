@@ -1,5 +1,5 @@
 """
-Framework integrations for kara-py.
+Framework integrations for kara-toolkit.
 """
 
 # Import integrations only if the required packages are available

@@ -1,7 +1,7 @@
 """
-LangChain integration example for kara-py.
+LangChain integration example for kara-toolkit.
 
-This example demonstrates how to use kara-py with LangChain
+This example demonstrates how to use kara-toolkit with LangChain
 for efficient RAG knowledge base updates using the KARATextSplitter.
 """
 
@@ -12,7 +12,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "LangChain is not installed. This module requires LangChain to be installed. "
-        "Please install it with: pip install kara-py[langchain]"
+        "Please install it with: pip install kara-toolkit[langchain]"
     ) from e
 
 
