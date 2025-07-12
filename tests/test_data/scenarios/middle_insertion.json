@@ -6,7 +6,7 @@
     "updated_text": "Python is a programming language. It is known for its simplicity and readability. It has many applications in data science.",
     "parameters": {
         "chunk_size": 50,
-        "epsilon": 0,
+        "max_imperfect_chunks": 1000000,
         "separators": [
             ". "
         ],

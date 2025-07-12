@@ -6,7 +6,7 @@
     "updated_text": "Artificial intelligence is rapidly evolving. Machine learning algorithms are becoming more sophisticated and efficient! Deep learning has revolutionized computer vision? Natural language processing enables seamless human-computer interaction.",
     "parameters": {
         "chunk_size": 80,
-        "epsilon": 0,
+        "max_imperfect_chunks": 1000000,
         "separators": [
             ". ",
             "! ",

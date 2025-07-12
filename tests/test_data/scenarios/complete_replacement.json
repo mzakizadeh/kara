@@ -6,7 +6,7 @@
     "updated_text": "Deep learning is a subset of machine learning. It uses neural networks with multiple layers to process information.",
     "parameters": {
         "chunk_size": 30,
-        "epsilon": 0.1,
+        "max_imperfect_chunks": 10,
         "separators": [
             "\n\n",
             "\n",

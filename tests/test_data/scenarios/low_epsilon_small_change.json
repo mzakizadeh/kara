@@ -1,12 +1,12 @@
 {
-    "name": "Small Change Low Epsilon",
-    "description": "Small change with low epsilon should prefer reusing chunks",
+    "name": "Small Change High Reuse Threshold",
+    "description": "Small change with high reuse threshold should prefer reusing chunks",
     "test_type": "single_document",
     "initial_text": "The weather is sunny today. It's a beautiful day for a walk.",
     "updated_text": "The weather is sunny today. It's a beautiful day for a hike.",
     "parameters": {
         "chunk_size": 20,
-        "epsilon": 0.01,
+        "imperfect_chunk_tolerance": 100,
         "separators": [
             "\n\n",
             "\n",
@@ -25,8 +25,8 @@
         "new_chunks_expected": true
     },
     "tags": [
-        "epsilon",
-        "low",
+        "imperfect_chunk_tolerance",
+        "high",
         "small_change",
         "single_doc"
     ]

@@ -1,6 +1,6 @@
 {
-    "name": "Small Change Low Reuse Threshold",
-    "description": "Small change with low reuse threshold should prefer new chunks",
+    "name": "Small Change Low Imperfect Chunk Tolerance",
+    "description": "Small change with low imperfect chunk tolerance should prefer new chunks",
     "test_type": "single_document",
     "initial_text": "The weather is sunny today. It's a beautiful day for a walk.",
     "updated_text": "The weather is sunny today. It's a beautiful day for a hike.",

@@ -6,7 +6,7 @@
     "updated_text": "",
     "parameters": {
         "chunk_size": 10,
-        "epsilon": 0.1,
+        "max_imperfect_chunks": 10,
         "separators": [
             " "
         ],

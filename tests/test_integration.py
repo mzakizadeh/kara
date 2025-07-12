@@ -32,7 +32,7 @@ class TestExamplesIntegration:
         chunker = RecursiveCharacterChunker(
             chunk_size=50, separators=[". ", " "], keep_separator=True
         )
-        updater = KARAUpdater(chunker=chunker, epsilon=0.1)
+        updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=9)
 
         # Create initial knowledge base
         initial_result = updater.create_knowledge_base([original_doc])
@@ -82,7 +82,7 @@ class TestExamplesIntegration:
         chunker = RecursiveCharacterChunker(
             chunk_size=50, separators=["\n\n", "\n", ". ", " "], keep_separator=True
         )
-        updater = KARAUpdater(chunker=chunker, epsilon=0.1)
+        updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=9)
 
         # Process original document
         original_result = updater.create_knowledge_base([original_doc])
@@ -130,7 +130,7 @@ class TestExamplesIntegration:
         chunker = RecursiveCharacterChunker(
             chunk_size=40, separators=[". ", " "], keep_separator=True
         )
-        updater = KARAUpdater(chunker=chunker, epsilon=0.1)
+        updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=9)
 
         # Create initial knowledge base
         initial_result = updater.create_knowledge_base(initial_docs)
@@ -162,18 +162,25 @@ class TestExamplesIntegration:
         print(f"  Chunks deleted: {update_result.num_deleted}")
         print(f"  Efficiency ratio: {update_result.efficiency_ratio:.2f}")
 
-    def test_epsilon_comparison_workflow(self) -> None:
-        """Test comparing different epsilon values."""
+    def test_imperfect_chunk_tolerance_comparison_workflow(self) -> None:
+        """Test comparing different imperfect_chunk_tolerance values."""
         text_original = "The quick brown fox jumps over the lazy dog."
         text_updated = "The quick brown fox jumps over the sleeping dog."
 
         chunker = RecursiveCharacterChunker(chunk_size=20, separators=[" "], keep_separator=True)
 
-        epsilon_values = [0.01, 0.1, 0.5, 0.9]
+        # Test different imperfect_chunk_tolerance values
+        # imperfect_chunk_tolerance=99 is similar to old epsilon=0.01
+        # imperfect_chunk_tolerance=9 is similar to old epsilon=0.1
+        # imperfect_chunk_tolerance=1 is similar to old epsilon=0.5
+        # imperfect_chunk_tolerance=0 is similar to old epsilon=1.0 (greedy)
+        imperfect_chunk_tolerance_values = [99, 9, 1, 0]
         results = []
 
-        for epsilon in epsilon_values:
-            updater = KARAUpdater(chunker=chunker, epsilon=epsilon)
+        for imperfect_chunk_tolerance in imperfect_chunk_tolerance_values:
+            updater = KARAUpdater(
+                chunker=chunker, imperfect_chunk_tolerance=imperfect_chunk_tolerance
+            )
 
             # Create and update
             initial_result = updater.create_knowledge_base([text_original])
@@ -184,7 +191,7 @@ class TestExamplesIntegration:
 
             results.append(
                 {
-                    "epsilon": epsilon,
+                    "imperfect_chunk_tolerance": imperfect_chunk_tolerance,
                     "reused": update_result.num_reused,
                     "added": update_result.num_added,
                     "deleted": update_result.num_deleted,
@@ -192,20 +199,24 @@ class TestExamplesIntegration:
                 }
             )
 
-        # Validate that different epsilon values produce different behaviors
-        # With a small change like this, low epsilon should reuse more
-        low_eps_efficiency = next(r["efficiency"] for r in results if r["epsilon"] == 0.01)
+        # Validate that different imperfect_chunk_tolerance values produce different behaviors
+        # With a small change like this, high imperfect_chunk_tolerance should reuse more
+        high_tolerance_efficiency = next(
+            r["efficiency"] for r in results if r["imperfect_chunk_tolerance"] == 99
+        )
 
         # This assertion might be flexible depending on the specific chunking
-        # but generally low epsilon should not be much worse than high epsilon
-        assert low_eps_efficiency >= 0, "Low epsilon should provide some efficiency"
+        # but generally high imperfect_chunk_tolerance should provide some efficiency
+        assert high_tolerance_efficiency >= 0, (
+            "High imperfect_chunk_tolerance should provide some efficiency"
+        )
 
-        print("Epsilon comparison results:")
-        print("Epsilon | Reused | Added | Deleted | Efficiency")
-        print("-" * 45)
+        print("Imperfect chunk tolerance comparison results:")
+        print("Tolerance | Reused | Added | Deleted | Efficiency")
+        print("-" * 50)
         for result in results:
             print(
-                f"{result['epsilon']:7.2f} | "
+                f"{result['imperfect_chunk_tolerance']:9d} | "
                 f"{result['reused']:6d} | "
                 f"{result['added']:5d} | "
                 f"{result['deleted']:7d} | "
@@ -241,7 +252,7 @@ class TestExamplesIntegration:
                 separators=config["separators"],  # type: ignore
                 keep_separator=True,
             )
-            updater = KARAUpdater(chunker=chunker, epsilon=0.1)
+            updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=10)
 
             # Create and update
             initial_result = updater.create_knowledge_base([text])

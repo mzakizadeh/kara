@@ -6,7 +6,7 @@
     "updated_text": "First paragraph about machine learning fundamentals and core concepts.\n\nSecond paragraph discussing neural networks.\n\nThird paragraph covering applications.\n\nFourth paragraph about future developments.",
     "parameters": {
         "chunk_size": 80,
-        "epsilon": 0.1,
+        "max_imperfect_chunks": 10,
         "separators": [
             "\n\n",
             "\n",

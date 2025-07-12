@@ -123,17 +123,27 @@ class KARAUpdater:
     def __init__(
         self,
         chunker: BaseDocumentChunker,
-        epsilon: float = 0.01,
+        imperfect_chunk_tolerance: int = 99,
     ):
         """
         Initialize the KARA updater.
 
         Args:
             chunker: Document chunker for breaking documents into optimal chunks
-            epsilon: Cost factor for reusing existing chunks (0 < epsilon < 1)
+            imperfect_chunk_tolerance: How many imperfect chunks can be tolerated before
+                                     preferring to create a new optimal chunk. Higher values
+                                     favor reusing existing chunks more aggressively.
+                                     - imperfect_chunk_tolerance=0: No tolerance (greedy merging)
+                                     - imperfect_chunk_tolerance=1: Tolerate 1 imperfect chunk
+                                     - imperfect_chunk_tolerance=9: Moderate reuse (old epsilon≈0.1)
+                                     - imperfect_chunk_tolerance=99: Aggressive reuse
         """
+        if imperfect_chunk_tolerance < 0:
+            raise ValueError("imperfect_chunk_tolerance must be non-negative")
+
+        # Convert to epsilon using the formula: epsilon = 1/(tolerance + 1)
+        self.epsilon = 1.0 / (imperfect_chunk_tolerance + 1)
         self.chunker = chunker
-        self.epsilon = epsilon
         self.max_chunk_size = getattr(chunker, "chunk_size", 1000)
 
     def _get_chunker_config(self) -> Dict[str, Any]:

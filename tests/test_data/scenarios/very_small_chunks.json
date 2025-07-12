@@ -6,7 +6,7 @@
     "updated_text": "Testing very small chunk sizes with this modified text.",
     "parameters": {
         "chunk_size": 5,
-        "epsilon": 0,
+        "max_imperfect_chunks": 1000000,
         "separators": [
             " "
         ],

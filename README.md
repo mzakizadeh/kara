@@ -35,20 +35,30 @@ from kara import KARAUpdater, RecursiveCharacterChunker
 
 # Initialize
 chunker = RecursiveCharacterChunker(chunk_size=500)
-updater = KARAUpdater(chunker=chunker, epsilon=0.1)
+updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=9)
 
 # Process initial documents
 result = updater.create_knowledge_base(["Your document content..."])
 
 # Update with new content - reuses existing chunks automatically
 update_result = updater.update_knowledge_base(
-    result.new_chunked_doc, 
+    result.new_chunked_doc,
     ["Updated document content..."]
 )
 
 print(f"Efficiency: {update_result.efficiency_ratio:.1%}")
 print(f"Chunks reused: {update_result.num_reused}")
 ```
+
+## Parameters
+
+KARA's chunking and update behavior is controlled by several key parameters:
+
+| Parameter                   | Description                                                                                       | Typical Examples                                |
+|-----------------------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------|
+| `imperfect_chunk_tolerance` | Number of imperfect chunks tolerated before preferring new optimal chunking.                      | <ul><li>**0**: Greedy merging, no reuse at all</li><li>**1**: Merge chunks if they satisfy length constraints</li><li>**9**: Moderate tolerance, merges most reusable chunks</li><li>**99**: Very high tolerance, aggressively merges and reuses chunks</li></ul> |
+| `chunk_size`                | Target size for each text chunk (in characters).                                                  | e.g., `500`                                     |
+| `separators`                | List of text separators used for splitting.                                                       | e.g., `["\n\n", "\n", ". ", " "]`               |
 
 ## LangChain Integration
 
@@ -57,7 +67,7 @@ from kara.integrations.langchain import KARATextSplitter
 from langchain_core.documents import Document
 
 # Use as a drop-in replacement for LangChain text splitters
-splitter = KARATextSplitter(chunk_size=300, epsilon=0.1)
+splitter = KARATextSplitter(chunk_size=300, imperfect_chunk_tolerance=2)
 
 docs = [Document(page_content="Your content...", metadata={"source": "file.pdf"})]
 chunks = splitter.split_documents(docs)

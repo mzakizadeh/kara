@@ -6,7 +6,7 @@
     "updated_text": "This text will also not be processed.",
     "parameters": {
         "chunk_size": -1,
-        "epsilon": 0.1,
+        "max_imperfect_chunks": 10,
         "separators": [
             " "
         ],

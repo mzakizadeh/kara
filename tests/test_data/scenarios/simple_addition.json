@@ -6,7 +6,7 @@
     "updated_text": "LangChain is an open-source framework built in Python that helps developers create applications powered by large language models (LLMs). It allows seamless integration between LLMs and external data sources like APIs, files, and databases. With LangChain, developers can build dynamic workflows where a language model not only generates text but also interacts with tools and environments.",
     "parameters": {
         "chunk_size": 50,
-        "epsilon": 0.1,
+        "imperfect_chunk_tolerance": 10,
         "separators": [
             "\n\n",
             "\n",

@@ -1,12 +1,12 @@
 {
-    "name": "Small Change Low Reuse Threshold",
-    "description": "Small change with low reuse threshold should prefer new chunks",
+    "name": "Small Change High Imperfect Chunk Tolerance",
+    "description": "Small change with high imperfect chunk tolerance should prefer reusing chunks",
     "test_type": "single_document",
     "initial_text": "The weather is sunny today. It's a beautiful day for a walk.",
     "updated_text": "The weather is sunny today. It's a beautiful day for a hike.",
     "parameters": {
         "chunk_size": 20,
-        "imperfect_chunk_tolerance": 1,
+        "imperfect_chunk_tolerance": 100,
         "separators": [
             "\n\n",
             "\n",
@@ -16,8 +16,8 @@
         "keep_separator": true
     },
     "expected_results": {
-        "min_reused_chunks": 0,
-        "efficiency_ratio_threshold": 0.0,
+        "min_reused_chunks": 1,
+        "efficiency_ratio_threshold": 0.4,
         "total_chunks_range": [
             2,
             4
@@ -26,7 +26,7 @@
     },
     "tags": [
         "imperfect_chunk_tolerance",
-        "low",
+        "high",
         "small_change",
         "single_doc"
     ]
