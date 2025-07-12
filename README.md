@@ -28,6 +28,14 @@ pip install kara-toolkit
 pip install kara-toolkit[langchain]
 ```
 
+## Key Parameters
+
+| Parameter                   | Type         | Default | Description                                                                                                                                                                                                                 |
+|-----------------------------|--------------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `imperfect_chunk_tolerance` | `int`        | `9`     | Controls the trade-off between reusing existing chunks and creating new, perfectly-sized ones.<br><br>- `0`: No tolerance; disables chunk reuse.<br>- `1`: Prefers new chunk over two imperfect ones.<br>- `9`: Balanced default.<br>- `99+`: Maximizes reuse, less uniform sizes. |
+| `chunk_size`                | `int`        | `500`   | Target size (in characters) for each text chunk.                                                                                                                                                                            |
+| `separators`                | `List[str]`  | `["\n\n", "\n", " "]`       | List of strings used to split the text. If not provided, uses default separators from `RecursiveCharacterChunker`.                                                                     |
+
 ## Quick Start
 
 ```python
@@ -50,16 +58,6 @@ print(f"Efficiency: {update_result.efficiency_ratio:.1%}")
 print(f"Chunks reused: {update_result.num_reused}")
 ```
 
-## Parameters
-
-KARA's chunking and update behavior is controlled by several key parameters:
-
-| Parameter                   | Description                                                                                       | Typical Examples                                |
-|-----------------------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------|
-| `imperfect_chunk_tolerance` | Number of imperfect chunks tolerated before preferring new optimal chunking.                      | <ul><li>**0**: Greedy merging, no reuse at all</li><li>**1**: Merge chunks if they satisfy length constraints</li><li>**9**: Moderate tolerance, merges most reusable chunks</li><li>**99**: Very high tolerance, aggressively merges and reuses chunks</li></ul> |
-| `chunk_size`                | Target size for each text chunk (in characters).                                                  | e.g., `500`                                     |
-| `separators`                | List of text separators used for splitting.                                                       | e.g., `["\n\n", "\n", ". ", " "]`               |
-
 ## LangChain Integration
 
 ```python
@@ -77,6 +75,14 @@ chunks = splitter.split_documents(docs)
 ## Examples
 
 See [`examples/`](examples/) for complete usage examples.
+
+
+## Roadmap to 1.0.0
+
+- [ ] **100% Test Coverage** - Complete test suite with full coverage
+- [ ] **Performance Benchmarks** - Real-world efficiency testing
+- [ ] **Framework Support** - LlamaIndex, Haystack, and others
+- [ ] **Complete Documentation** - API reference, guides, and examples
 
 ## License
 
