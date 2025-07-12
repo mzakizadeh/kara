@@ -96,7 +96,78 @@ def main() -> None:
     print(f"   Split into {len(chunked_docs)} Document objects")
     print(f"   Each preserves metadata: {chunked_docs[0].metadata}")
 
-    print("\nKARA minimizes re-embedding by reusing unchanged chunks!")
+    # Demonstrate multi-document processing
+    print("\n5. Multi-Document Processing:")
+
+    # Multiple documents with some related content
+    docs_multi = [
+        Document(
+            page_content=original_doc,
+            metadata={"source": "doc1", "topic": "framework"},
+        ),
+        Document(
+            page_content=(
+                "Python's rich ecosystem makes it ideal for AI development. Libraries like numpy, "
+                "pandas, and scikit-learn integrate seamlessly with LangChain components."
+            ),
+            metadata={"source": "doc2", "topic": "python"},
+        ),
+        Document(
+            page_content=(
+                "Vector databases enable semantic search in RAG applications. They store "
+                "embeddings and allow for efficient similarity-based retrieval of context."
+            ),
+            metadata={"source": "doc3", "topic": "vectors"},
+        ),
+    ]
+
+    print("   Processing multiple documents:")
+    multi_chunked_docs = splitter.split_documents(docs_multi)
+    print(f"   Split {len(docs_multi)} documents into {len(multi_chunked_docs)} chunks")
+
+    # Show chunks with their sources
+    for i, doc in enumerate(multi_chunked_docs, 1):
+        source = doc.metadata.get("source", "unknown")
+        topic = doc.metadata.get("topic", "unknown")
+        content_preview = doc.page_content.strip()[:50]
+        print(f"   Chunk {i} ({source}/{topic}): '{content_preview}...'")
+
+    # Update one document and add a new one
+    print("\n   Updating with modified documents:")
+    updated_docs_multi = [
+        Document(
+            page_content=updated_doc,
+            metadata={"source": "doc1", "topic": "framework", "version": "2.0"},
+        ),
+        docs_multi[1],  # Unchanged
+        docs_multi[2],  # Unchanged
+        Document(
+            page_content=(
+                "Retrieval-Augmented Generation (RAG) combines the power of large language "
+                "models with external knowledge retrieval to provide more accurate and "
+                "contextual responses."
+            ),
+            metadata={"source": "doc4", "topic": "rag"},
+        ),
+    ]
+
+    # Process updated documents
+    original_texts = [doc.page_content for doc in multi_chunked_docs]
+    new_chunked_docs = splitter.split_documents(updated_docs_multi)
+
+    # Calculate reuse statistics
+    new_texts = [doc.page_content for doc in new_chunked_docs]
+    reused_chunks = sum(1 for text in new_texts if text in original_texts)
+    total_new_chunks = len(new_texts)
+    multi_efficiency = (reused_chunks / total_new_chunks) * 100
+
+    print(f"   Result: {total_new_chunks} total chunks")
+    efficiency_msg = f"{reused_chunks}/{total_new_chunks} chunks reused ({multi_efficiency:.0f}%)"
+    print(f"   Multi-doc efficiency: {efficiency_msg}")
+    print("   - Document 1: Modified (some chunks reused)")
+    print("   - Document 2: Unchanged (all chunks reused)")
+    print("   - Document 3: Unchanged (all chunks reused)")
+    print("   - Document 4: New (no chunks reused)")
 
 
 if __name__ == "__main__":
