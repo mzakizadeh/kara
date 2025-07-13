@@ -286,9 +286,11 @@ class KARAUpdater:
 
                     # A single split cannot exceed the max chunk size
                     # TODO: handle the edge case in which all splits are larger than max_chunk_size
-                    assert len(split) <= self.max_chunk_size, (
-                        f"Split length {len(split)} exceeds max chunk size {self.max_chunk_size}."
-                    )
+                    if len(split) > self.max_chunk_size:
+                        raise ValueError(
+                            f"Split length {len(split)} exceeds max chunk size "
+                            f"{self.max_chunk_size}."
+                        )
 
                 if current_length > self.max_chunk_size:
                     break
@@ -303,26 +305,33 @@ class KARAUpdater:
 
                 edges[i].append((j, cost, chunk_splits.copy(), chunk_hash))
 
-        # Find optimal path using Dijkstra's algorithm
+        # Find optimal path using Dijkstra's algorithm with edge count tie-breaking
         min_cost = [float("inf")] * (N + 1)
+        min_num_edges = [float("inf")] * (N + 1)
         min_cost[0] = 0
+        min_num_edges[0] = 0
         previous_node: List[Optional[int]] = [None] * (N + 1)
         previous_edge: List[Optional[Tuple[int, float, List[str], str]]] = [None] * (N + 1)
 
-        heap: List[Tuple[float, int]] = [(0, 0)]
+        heap: List[Tuple[float, int, int]] = [(0, 0, 0)]  # (cost, edge_count, node)
 
         while heap:
-            cost_u, u = heapq.heappop(heap)
-            if cost_u > min_cost[u]:
+            cost_u, edges_count_u, u = heapq.heappop(heap)
+            if cost_u > min_cost[u] or (cost_u == min_cost[u] and edges_count_u > min_num_edges[u]):
                 continue
 
             for v, edge_cost, chunk_splits, chunk_hash in edges[u]:
                 new_cost = min_cost[u] + edge_cost
-                if new_cost < min_cost[v]:
+                new_num_edges = min_num_edges[u] + 1
+
+                if new_cost < min_cost[v] or (
+                    new_cost == min_cost[v] and new_num_edges < min_num_edges[v]
+                ):
                     min_cost[v] = new_cost
+                    min_num_edges[v] = new_num_edges
                     previous_node[v] = u
                     previous_edge[v] = (v, edge_cost, chunk_splits, chunk_hash)
-                    heapq.heappush(heap, (new_cost, v))
+                    heapq.heappush(heap, (new_cost, new_num_edges, v))
 
         # Reconstruct the solution for this document
         new_chunks: List[ChunkData] = []
