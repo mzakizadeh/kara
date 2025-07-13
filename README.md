@@ -10,15 +10,6 @@
 
 KARA is a Python library that efficiently updates knowledge bases by reducing unnecessary embedding operations. When documents change, KARA automatically identifies and reuses existing chunks, minimizing the need for new embeddings.
 
-## How It Works
-
-KARA formulates chunking as a graph optimization problem:
-1. Creates a DAG where nodes are split positions and edges are potential chunks
-2. Uses Dijkstra's algorithm to find optimal chunking paths
-3. Automatically reuses existing chunks to minimize embedding costs
-
-<!-- Typical efficiency gains: 70-90% fewer embeddings for document updates. -->
-
 ## Installation
 
 ```bash
@@ -75,6 +66,17 @@ chunks = splitter.split_documents(docs)
 ## Examples
 
 See [`examples/`](examples/) for complete usage examples.
+
+
+## How It Works
+
+KARA formulates chunking as a graph optimization problem:
+1. Creates a DAG where nodes are split positions and edges are potential chunks
+2. Uses Dijkstra's algorithm to find optimal chunking paths
+3. Automatically reuses existing chunks to minimize embedding costs
+
+<!-- Typical efficiency gains: 70-90% fewer embeddings for document updates. -->
+
 
 ## Limitations
 
