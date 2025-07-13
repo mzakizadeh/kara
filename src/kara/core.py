@@ -57,6 +57,7 @@ class ChunkedDocument:
     ) -> "ChunkedDocument":
         """
         Create a ChunkedDocument from a list of texts using the specified separators.
+
         Args:
             texts: List of text strings to chunk
             separators: List of separators to use for chunking
