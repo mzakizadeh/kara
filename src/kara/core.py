@@ -4,6 +4,7 @@ Core KARA algorithm implementation.
 
 import hashlib
 import heapq
+import sys
 import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -306,8 +307,10 @@ class KARAUpdater:
                 edges[i].append((j, cost, chunk_splits.copy(), chunk_hash))
 
         # Find optimal path using Dijkstra's algorithm with edge count tie-breaking
+        int_inf: int = sys.maxsize
+
         min_cost = [float("inf")] * (N + 1)
-        min_num_edges = [float("inf")] * (N + 1)
+        min_num_edges = [int_inf] * (N + 1)
         min_cost[0] = 0
         min_num_edges[0] = 0
         previous_node: List[Optional[int]] = [None] * (N + 1)
@@ -331,7 +334,8 @@ class KARAUpdater:
                     min_num_edges[v] = new_num_edges
                     previous_node[v] = u
                     previous_edge[v] = (v, edge_cost, chunk_splits, chunk_hash)
-                    heapq.heappush(heap, (new_cost, new_num_edges, v))
+                    heap_item: Tuple[float, int, int] = (new_cost, new_num_edges, v)
+                    heapq.heappush(heap, heap_item)
 
         # Reconstruct the solution for this document
         new_chunks: List[ChunkData] = []
