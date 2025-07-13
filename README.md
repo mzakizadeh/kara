@@ -76,6 +76,15 @@ chunks = splitter.split_documents(docs)
 
 See [`examples/`](examples/) for complete usage examples.
 
+## Limitations
+
+While KARA provides significant efficiency improvements for knowledge base updates, there are some current limitations to be aware of:
+
+- **Document Version Dependency**: The biggest limitation is that you need to keep the last version of documents to identify reusable chunks. However, you may be able to reconstruct document content using saved chunks in your vector store to reduce storage overhead. When compared to LangChain's indexing solution ([documented here](https://python.langchain.com/docs/how_to/indexing/)), which maintains a separate SQL database for chunk hashes while being extremely inefficient, our approach is still superior.
+
+- **Chunking Configuration Changes**: You likely cannot change splitting configurations (chunk size, separator characters) between updates, as this may disrupt the algorithm's optimal solution. We have not yet tested the extent to which configuration changes impact performance.
+
+- **No Chunk Overlap Support**: We currently do not support overlapping chunks, but we are investigating whether this feature can be added in future versions.
 
 ## Roadmap to 1.0.0
 
@@ -83,6 +92,7 @@ See [`examples/`](examples/) for complete usage examples.
 - [ ] **Performance Benchmarks** - Real-world efficiency testing
 - [ ] **Framework Support** - LlamaIndex, Haystack, and others
 - [ ] **Complete Documentation** - API reference, guides, and examples
+- [ ] **Token-Based Optimal Chunking** - Extend algorithm to support token-based chunking strategies
 
 ## License
 
