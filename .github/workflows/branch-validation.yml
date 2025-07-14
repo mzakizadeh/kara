@@ -1,0 +1,107 @@
+name: Branch Name Validation
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+  push:
+    branches-ignore: [ main, dev ]
+
+jobs:
+  validate-branch-name:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    
+    steps:
+    - name: Validate branch name
+      run: |
+        # Get the branch name
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          BRANCH_NAME="${{ github.head_ref }}"
+        else
+          BRANCH_NAME="${{ github.ref_name }}"
+        fi
+        
+        echo "Validating branch name: $BRANCH_NAME"
+        
+        # Define allowed patterns
+        ALLOWED_PATTERNS=(
+          "^main$"
+          "^dev$"
+          "^feat\/[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+          "^hotfix\/[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+          "^bugfix\/[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+          "^docs\/[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+          "^refactor\/[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+        )
+        
+        # Check if branch name matches any allowed pattern
+        VALID=false
+        for pattern in "${ALLOWED_PATTERNS[@]}"; do
+          if [[ $BRANCH_NAME =~ $pattern ]]; then
+            VALID=true
+            echo "✅ Branch name '$BRANCH_NAME' matches pattern: $pattern"
+            break
+          fi
+        done
+        
+        if [ "$VALID" = "false" ]; then
+          echo "❌ Branch name '$BRANCH_NAME' does not match any allowed patterns:"
+          echo "  - main"
+          echo "  - dev"
+          echo "  - feat/feature-name"
+          echo "  - hotfix/fix-name"
+          echo "  - bugfix/bug-name"
+          echo "  - docs/doc-name"
+          echo "  - refactor/refactor-name"
+          echo ""
+          echo "Branch names should:"
+          echo "  - Use lowercase letters, numbers, and hyphens only"
+          echo "  - Follow the pattern: type/description"
+          echo "  - Use descriptive names (e.g., feat/langchain-integration)"
+          echo ""
+          echo "Please rename your branch to follow the naming convention."
+          exit 1
+        fi
+        
+        echo "✅ Branch name validation passed!"
+
+  validate-commit-messages:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Validate commit messages
+      run: |
+        # Get commits in the PR
+        git log --format="%s" origin/${{ github.base_ref }}..${{ github.sha }} > commits.txt
+        
+        echo "Validating commit messages in PR..."
+        
+        # Check each commit message
+        while IFS= read -r message; do
+          echo "Checking: $message"
+          
+          # Check if commit message follows conventional commits format
+          if [[ $message =~ ^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?: .+ ]]; then
+            echo "✅ Valid commit message: $message"
+          else
+            echo "❌ Invalid commit message: $message"
+            echo "Commit messages should follow the conventional commits format:"
+            echo "  type(scope): description"
+            echo ""
+            echo "Examples:"
+            echo "  feat: add new chunking algorithm"
+            echo "  fix: resolve memory leak in core module"
+            echo "  docs: update API documentation"
+            echo "  test: add unit tests for splitters"
+            echo ""
+            echo "Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, build"
+            exit 1
+          fi
+        done < commits.txt
+        
+        echo "✅ All commit messages are valid!"

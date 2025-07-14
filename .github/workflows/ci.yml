@@ -8,8 +8,10 @@ on:
       - feat/**
       - hotfix/**
       - bugfix/**
+      - docs/**
+      - refactor/**
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 
 jobs:
   test:

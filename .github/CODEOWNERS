@@ -1,0 +1,18 @@
+# Global code owners
+* @mzakizadeh
+
+# Core algorithm files require extra review
+/src/kara/core.py @mzakizadeh
+/src/kara/splitters.py @mzakizadeh
+
+# CI/CD and build configuration
+/.github/ @mzakizadeh
+/pyproject.toml @mzakizadeh
+
+# Documentation
+/docs/ @mzakizadeh
+/README.md @mzakizadeh
+
+# Examples and tests
+/examples/ @mzakizadeh
+/tests/ @mzakizadeh

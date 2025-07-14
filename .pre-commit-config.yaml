@@ -24,3 +24,12 @@ repos:
     hooks:
       - id: mypy
         args: [--ignore-missing-imports]
+
+  - repo: local
+    hooks:
+      - id: validate-branch-name
+        name: Validate branch name
+        entry: python .github/scripts/validate-branch.py
+        language: system
+        pass_filenames: false
+        always_run: true
