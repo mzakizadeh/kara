@@ -26,7 +26,5 @@ __all__ = [
     "UpdateResult",
     "BaseDocumentChunker",
     "RecursiveCharacterChunker",
-    "SimpleCharacterChunker",
-    "FixedSizeCharacterChunker",
     "RecursiveTokenChunker",
 ]
