@@ -5,7 +5,7 @@ For integration testing and scenario-based testing, see test_data_driven.py.
 """
 
 from kara.core import ChunkData, ChunkedDocument
-from kara.splitters import RecursiveCharacterChunker
+from kara.splitters import RecursiveCharacterChunker, RecursiveTokenChunker
 
 
 class TestChunkData:
@@ -107,3 +107,36 @@ class TestRecursiveCharacterChunker:
 
         assert len(result) >= 1
         assert all(isinstance(chunk, str) for chunk in result)
+
+
+class TestRecursiveTokenChunker:
+    """Tests for RecursiveTokenChunker."""
+
+    def test_basic_token_chunking(self) -> None:
+        """Test that token-based chunking respects the chunk_size."""
+        text = "one two three four five six seven"
+        chunker = RecursiveTokenChunker(tokenizer_function=str.split, chunk_size=3)
+
+        chunks = chunker.create_chunks(text)
+
+        # Expect ceil(7/3) = 3 chunks
+        assert len(chunks) == 3
+        # Each chunk should contain at most 3 tokens
+        for chunk in chunks:
+            assert len(chunk.split()) <= 3
+
+    def test_exact_multiple_of_chunk_size(self) -> None:
+        """Tokens equal to a multiple of chunk_size should divide evenly."""
+        text = "tok1 tok2 tok3 tok4 tok5 tok6"
+        chunker = RecursiveTokenChunker(tokenizer_function=str.split, chunk_size=3)
+
+        chunks = chunker.create_chunks(text)
+
+        assert len(chunks) == 2
+        assert all(len(chunk.split()) == 3 for chunk in chunks)
+
+    def test_empty_text(self) -> None:
+        """Test that empty input returns no chunks."""
+        chunker = RecursiveTokenChunker(tokenizer_function=str.split, chunk_size=2)
+
+        assert chunker.create_chunks("") == []
