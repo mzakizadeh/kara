@@ -9,7 +9,7 @@ on:
       - hotfix/**
       - bugfix/**
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 
 jobs:
   test:
