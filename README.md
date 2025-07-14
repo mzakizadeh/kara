@@ -24,7 +24,7 @@ pip install kara-toolkit[langchain]
 | Parameter                   | Type         | Default | Description                                                                                                                                                                                                                 |
 |-----------------------------|--------------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `imperfect_chunk_tolerance` | `int`        | `9`     | Controls the trade-off between reusing existing chunks and creating new, perfectly-sized ones.<br><br>- `0`: No tolerance; disables chunk reuse.<br>- `1`: Prefers new chunk over two imperfect ones.<br>- `9`: Balanced default.<br>- `99+`: Maximizes reuse, less uniform sizes. |
-| `chunk_size`                | `int`        | `500`   | Target size (in characters) for each text chunk.                                                                                                                                                                            |
+| `chunk_size`                | `int`        | `4000`   | Target size (in characters) for each text chunk.                                                                                                                                                                            |
 | `separators`                | `List[str]`  | `["\n\n", "\n", " "]`       | List of strings used to split the text. If not provided, uses default separators from `RecursiveCharacterChunker`.                                                                     |
 
 ## Quick Start

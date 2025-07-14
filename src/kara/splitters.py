@@ -97,7 +97,7 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
 
         Args:
             separators: List of separators to try, in order of preference
-            chunk_size: Maximum chunk size in characters
+            chunk_size: Maximum chunk size in characters. Defaults to 4000
             overlap: Overlap between chunks (not implemented yet)
             keep_separator: Whether to keep separators in the result
         """
