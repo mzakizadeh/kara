@@ -4,11 +4,10 @@ Core KARA algorithm implementation.
 
 import hashlib
 import heapq
-import json
 import sys
 import warnings
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .splitters import BaseDocumentChunker
 
@@ -17,40 +16,17 @@ from .splitters import BaseDocumentChunker
 class ChunkData:
     """Represents a chunk with its content and metadata."""
 
-    content: Any
-    splits: List[Any]
+    content: str
+    splits: List[str]
     hash: str
     document_id: Optional[int] = None
 
     @classmethod
-    def from_splits(
-        cls,
-        splits: Sequence[Any],
-        document_id: Optional[int] = None,
-        serializer: Optional[Callable[[Sequence[Any]], bytes]] = None,
-        renderer: Optional[Callable[[Sequence[Any]], Any]] = None,
-    ) -> "ChunkData":
+    def from_splits(cls, splits: List[str], document_id: Optional[int] = None) -> "ChunkData":
         """Create ChunkData from splits."""
-        if renderer is None:
-            if all(isinstance(unit, str) for unit in splits):
-                content = "".join(splits)
-            else:
-                content = list(splits)
-        else:
-            content = renderer(splits)
-
-        if serializer is None:
-            if all(isinstance(unit, str) for unit in splits):
-                serialized = "".join(splits).encode("utf-8")
-            else:
-                serialized = json.dumps(
-                    list(splits), separators=(",", ":"), ensure_ascii=True
-                ).encode("utf-8")
-        else:
-            serialized = serializer(splits)
-
-        hash_value = hashlib.md5(serialized).hexdigest()
-        return cls(content=content, splits=list(splits), hash=hash_value, document_id=document_id)
+        content = "".join(splits)
+        hash_value = hashlib.md5(content.encode("utf-8")).hexdigest()
+        return cls(content=content, splits=splits, hash=hash_value, document_id=document_id)
 
 
 @dataclass
@@ -71,13 +47,13 @@ class ChunkedDocument:
         """Get all unique document IDs in the knowledge base."""
         return {chunk.document_id for chunk in self.chunks if chunk.document_id is not None}
 
-    def get_chunk_contents(self) -> List[Any]:
-        """Get all chunk contents."""
+    def get_chunk_contents(self) -> List[str]:
+        """Get all chunk contents as strings."""
         return [chunk.content for chunk in self.chunks]
 
     @classmethod
     def from_chunks(
-        cls, chunks: List[Any], chunker: BaseDocumentChunker, document_id: Optional[int] = None
+        cls, chunks: List[str], chunker: BaseDocumentChunker, document_id: Optional[int] = None
     ) -> "ChunkedDocument":
         """Create a :class:`ChunkedDocument` from pre-split chunks.
 
@@ -97,21 +73,13 @@ class ChunkedDocument:
             stacklevel=2,
         )
         result = []
-        for chunk in chunks:
-            splits = chunker.normalize_chunk(chunk)
-            chunk_length = sum(chunker.unit_length(unit) for unit in splits)
-            assert chunk_length <= chunker.chunk_size, (
-                "Chunk length exceeds the maximum chunk size defined in the chunker."
-                f" Chunk length: {chunk_length}, Max chunk size: {chunker.chunk_size}"
+        for text in chunks:
+            assert len(text) <= chunker.chunk_size, (
+                "Text length exceeds the maximum chunk size defined in the chunker."
+                f" Text length: {len(text)}, Max chunk size: {chunker.chunk_size}"
             )
-            result.append(
-                ChunkData.from_splits(
-                    splits,
-                    document_id,
-                    serializer=chunker.serialize_units,
-                    renderer=chunker.render_units,
-                )
-            )
+            splits = chunker._split_to_units(text)
+            result.append(ChunkData.from_splits(splits, document_id))
         return cls(chunks=result)
 
 
@@ -200,18 +168,12 @@ class KARAUpdater:
         total_added = 0
 
         for doc_id, document in enumerate(documents):
-            chunk_list = self.chunker.create_chunks(document)
+            chunk_strings = self.chunker.create_chunks(document)
 
-            for chunk in chunk_list:
-                splits = self.chunker.normalize_chunk(chunk)
-                all_chunks.append(
-                    ChunkData.from_splits(
-                        splits,
-                        doc_id,
-                        serializer=self.chunker.serialize_units,
-                        renderer=self.chunker.render_units,
-                    )
-                )
+            for chunk_str in chunk_strings:
+                # Split each chunk back into its component units
+                splits = self.chunker._split_to_units(chunk_str)
+                all_chunks.append(ChunkData.from_splits(splits, doc_id))
                 total_added += 1
 
         return UpdateResult(
@@ -277,7 +239,7 @@ class KARAUpdater:
     def _update_chunks_for_document(
         self,
         current_kb: ChunkedDocument,
-        new_splits: List[Any],
+        new_splits: List[str],
         document_id: int,
         old_chunk_hashes: Set[str],
     ) -> UpdateResult:
@@ -305,8 +267,6 @@ class KARAUpdater:
 
         max_chunk_size = self.max_chunk_size
         max_chunk_size_float = float(max_chunk_size)
-        overlap_units = getattr(self.chunker, "overlap", 0)
-        unit_length = self.chunker.unit_length
 
         for i in range(N):
             current_length = 0
@@ -316,21 +276,20 @@ class KARAUpdater:
                 if j <= N:
                     split = new_splits[j - 1]
                     chunk_splits.append(split)
-                    current_length += unit_length(split)
+                    current_length += len(split)
 
                     # A single split cannot exceed the max chunk size
                     # TODO: handle the edge case in which all splits are larger than max_chunk_size
-                    if unit_length(split) > max_chunk_size:
+                    if len(split) > max_chunk_size:
                         raise ValueError(
-                            f"Split length {unit_length(split)} exceeds max chunk size "
-                            f"{max_chunk_size}."
+                            f"Split length {len(split)} exceeds max chunk size {max_chunk_size}."
                         )
 
                 if current_length > max_chunk_size:
                     break
 
-                serialized = self.chunker.serialize_units(chunk_splits)
-                chunk_hash = hashlib.md5(serialized).hexdigest()
+                chunk_str = "".join(chunk_splits)
+                chunk_hash = hashlib.md5(chunk_str.encode("utf-8")).hexdigest()
 
                 fill_rate = current_length / max_chunk_size_float
                 penalty = (1 - fill_rate) ** 2
@@ -340,12 +299,7 @@ class KARAUpdater:
                 else:
                     cost = 1.0 + penalty
 
-                if j == N:
-                    next_node = N
-                else:
-                    next_node = max(i + 1, j - overlap_units)
-
-                edges[i].append((next_node, cost, chunk_splits.copy(), chunk_hash))
+                edges[i].append((j, cost, chunk_splits.copy(), chunk_hash))
 
         # Find optimal path using Dijkstra's algorithm with edge count tie-breaking
         int_inf: int = sys.maxsize
@@ -389,12 +343,7 @@ class KARAUpdater:
                 break
 
             _, edge_cost, chunk_splits, chunk_hash = edge
-            chunk_data = ChunkData.from_splits(
-                chunk_splits,
-                document_id,
-                serializer=self.chunker.serialize_units,
-                renderer=self.chunker.render_units,
-            )
+            chunk_data = ChunkData.from_splits(chunk_splits, document_id)
             new_chunks.insert(0, chunk_data)
 
             if chunk_hash in old_chunk_hashes:
@@ -410,7 +359,7 @@ class KARAUpdater:
         result.new_chunked_doc = ChunkedDocument(chunks=new_chunks)
         return result
 
-    def _update_chunks(self, current_kb: ChunkedDocument, new_splits: List[Any]) -> UpdateResult:
+    def _update_chunks(self, current_kb: ChunkedDocument, new_splits: List[str]) -> UpdateResult:
         """
         Update chunks using the KARA algorithm for backward compatibility.
         This method handles single document updates.

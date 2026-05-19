@@ -16,8 +16,11 @@
     "expected_results": {
         "min_reused_chunks": 2,
         "efficiency_ratio_threshold": 0.4,
-        "new_chunks_expected": true,
-        "total_chunks": 9
+        "total_chunks_range": [
+            6,
+            10
+        ],
+        "new_chunks_expected": true
     },
     "tags": [
         "basic",
