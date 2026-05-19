@@ -12,8 +12,8 @@ except ImportError as e:
         "Please install it with: pip install kara-toolkit[langchain]"
     ) from e
 
+from ..chunkers import CharacterChunker
 from ..core import ChunkedDocument, KARAUpdater
-from ..splitters import RecursiveCharacterChunker
 
 
 class KARATextSplitter(TextSplitter):
@@ -42,7 +42,7 @@ class KARATextSplitter(TextSplitter):
         super().__init__(**kwargs)
 
         # Initialize the underlying chunker
-        self._kara_chunker = RecursiveCharacterChunker(
+        self._kara_chunker = CharacterChunker(
             separators=separators or ["\n\n", "\n", " "],
             keep_separator=kwargs.get("keep_separator", True),
             chunk_size=chunk_size,

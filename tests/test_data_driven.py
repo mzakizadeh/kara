@@ -5,8 +5,8 @@ Data-driven tests for KARA core functionality using test scenarios.
 import pytest
 from test_data_loader import DataLoader, Scenario
 
+from kara.chunkers import CharacterChunker
 from kara.core import KARAUpdater, UpdateResult
-from kara.splitters import RecursiveCharacterChunker
 
 
 class TestKARADataDriven:
@@ -19,7 +19,7 @@ class TestKARADataDriven:
 
     def _create_updater_from_scenario(self, scenario: Scenario) -> KARAUpdater:
         """Create a KARAUpdater from scenario parameters."""
-        chunker = RecursiveCharacterChunker(
+        chunker = CharacterChunker(
             chunk_size=scenario.parameters["chunk_size"],
             separators=scenario.parameters["separators"],
             keep_separator=scenario.parameters["keep_separator"],
@@ -33,7 +33,7 @@ class TestKARADataDriven:
             # Handle scenarios that expect exceptions
             if scenario.expected_exception:
                 # Get the exception class from string name
-                exception_class = getattr(__builtins__, scenario.expected_exception, Exception)
+                exception_class = scenario.expected_exception
                 if hasattr(Exception, scenario.expected_exception):
                     import sys
 

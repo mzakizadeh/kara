@@ -4,8 +4,8 @@ These tests focus on testing individual classes and methods in isolation.
 For integration testing and scenario-based testing, see test_data_driven.py.
 """
 
+from kara.chunkers import CharacterChunker, TokenChunker
 from kara.core import ChunkData, ChunkedDocument
-from kara.splitters import RecursiveCharacterChunker, RecursiveTokenChunker
 
 
 class TestChunkData:
@@ -62,12 +62,12 @@ class TestChunkedDocument:
         assert doc.get_chunk_contents() == []
 
 
-class TestRecursiveCharacterChunker:
-    """Tests for RecursiveCharacterChunker."""
+class TestCharacterChunker:
+    """Tests for CharacterChunker."""
 
     def test_basic_chunking(self, sample_text: str) -> None:
         """Test basic text chunking."""
-        chunker = RecursiveCharacterChunker(separators=["\n\n", "\n", " "])
+        chunker = CharacterChunker(separators=["\n\n", "\n", " "])
         result = chunker.create_chunks(sample_text)
 
         assert len(result) > 0
@@ -75,7 +75,7 @@ class TestRecursiveCharacterChunker:
 
     def test_keep_separator(self, sample_text: str) -> None:
         """Test chunking with separator preservation."""
-        chunker = RecursiveCharacterChunker(separators=["\n"], keep_separator=True)
+        chunker = CharacterChunker(separators=["\n"], keep_separator=True)
         result = chunker.create_chunks(sample_text)
 
         # Count newlines in original vs result
@@ -87,7 +87,7 @@ class TestRecursiveCharacterChunker:
 
     def test_no_separator(self, sample_text: str) -> None:
         """Test chunking without separator preservation."""
-        chunker = RecursiveCharacterChunker(separators=["\n"], keep_separator=False)
+        chunker = CharacterChunker(separators=["\n"], keep_separator=False)
         result = chunker.create_chunks(sample_text)
 
         # Should have removed newlines
@@ -95,27 +95,27 @@ class TestRecursiveCharacterChunker:
 
     def test_empty_text(self) -> None:
         """Test chunking empty text."""
-        chunker = RecursiveCharacterChunker()
+        chunker = CharacterChunker()
         result = chunker.create_chunks("")
 
         assert result == []
 
     def test_single_separator(self) -> None:
         """Test chunking with single separator."""
-        chunker = RecursiveCharacterChunker(separators=["\n"])
+        chunker = CharacterChunker(separators=["\n"])
         result = chunker.create_chunks("line1\nline2\nline3")
 
         assert len(result) >= 1
         assert all(isinstance(chunk, list) for chunk in result)
 
 
-class TestRecursiveTokenChunker:
-    """Tests for RecursiveTokenChunker."""
+class TestTokenChunker:
+    """Tests for TokenChunker."""
 
     def test_basic_token_chunking(self) -> None:
         """Test that token-based chunking respects the chunk_size."""
         text = "one two three four five six seven"
-        chunker = RecursiveTokenChunker(tokenizer_function=str.split, chunk_size=3)
+        chunker = TokenChunker(tokenizer_function=str.split, chunk_size=3)
 
         chunks = chunker.create_chunks(text)
 
@@ -128,7 +128,7 @@ class TestRecursiveTokenChunker:
     def test_exact_multiple_of_chunk_size(self) -> None:
         """Tokens equal to a multiple of chunk_size should divide evenly."""
         text = "tok1 tok2 tok3 tok4 tok5 tok6"
-        chunker = RecursiveTokenChunker(tokenizer_function=str.split, chunk_size=3)
+        chunker = TokenChunker(tokenizer_function=str.split, chunk_size=3)
 
         chunks = chunker.create_chunks(text)
 
@@ -137,6 +137,6 @@ class TestRecursiveTokenChunker:
 
     def test_empty_text(self) -> None:
         """Test that empty input returns no chunks."""
-        chunker = RecursiveTokenChunker(tokenizer_function=str.split, chunk_size=2)
+        chunker = TokenChunker(tokenizer_function=str.split, chunk_size=2)
 
         assert chunker.create_chunks("") == []

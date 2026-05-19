@@ -115,7 +115,7 @@ class BaseDocumentChunker(ABC):
         return chunks
 
 
-class RecursiveCharacterChunker(BaseDocumentChunker):
+class CharacterChunker(BaseDocumentChunker):
     """
     Recursive character-based chunker that tries multiple separators.
 
@@ -204,7 +204,7 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
         return [s for s in splits if s]
 
 
-class RecursiveTokenChunker(BaseDocumentChunker):
+class TokenChunker(BaseDocumentChunker):
     """
     Token-based chunker that splits text into tokens and merges them greedily.
 
@@ -283,3 +283,94 @@ class RecursiveTokenChunker(BaseDocumentChunker):
                 start = end
 
         return chunks
+
+
+class OpenAITokenChunker(BaseDocumentChunker):
+    """Token chunker using OpenAI's tiktoken encodings."""
+
+    def __init__(
+        self,
+        encoding_name: str = "cl100k_base",
+        chunk_size: int = 512,
+        overlap: int = 0,
+    ):
+        """
+        Initialize the OpenAI token chunker.
+
+        Args:
+            encoding_name: tiktoken encoding name to use
+            chunk_size: Maximum size of each chunk in tokens
+            overlap: Overlap between chunks in tokens
+        """
+        super().__init__(chunk_size=chunk_size, overlap=overlap)
+        try:
+            import tiktoken
+        except ImportError as exc:
+            raise ImportError(
+                "tiktoken is required for OpenAITokenChunker. "
+                "Install with: pip install kara-toolkit[openai]"
+            ) from exc
+
+        self.encoding_name = encoding_name
+        self._encoding = tiktoken.get_encoding(encoding_name)
+
+    def create_chunks(self, text: str) -> List[List[Any]]:
+        """Split text into optimally-sized token chunks."""
+        units = self._split_to_units(text)
+        return self._merge_units_greedy(units, self.chunk_size)
+
+    def _split_to_units(self, text: str) -> List[str]:
+        """Split text into token strings using tiktoken."""
+        token_ids = self._encoding.encode(text)
+        return [self._encoding.decode([token_id]) for token_id in token_ids]
+
+    def unit_length(self, unit: Any) -> int:
+        """Treat each token unit as length 1."""
+        return 1
+
+
+class HuggingFaceTokenChunker(BaseDocumentChunker):
+    """Token chunker using Hugging Face tokenizers."""
+
+    def __init__(
+        self,
+        model_name: str,
+        chunk_size: int = 512,
+        overlap: int = 0,
+    ):
+        """
+        Initialize the Hugging Face token chunker.
+
+        Args:
+            model_name: Hugging Face model name to load
+            chunk_size: Maximum size of each chunk in tokens
+            overlap: Overlap between chunks in tokens
+        """
+        super().__init__(chunk_size=chunk_size, overlap=overlap)
+        try:
+            from transformers import AutoTokenizer
+        except ImportError as exc:
+            raise ImportError(
+                "transformers is required for HuggingFaceTokenChunker. "
+                "Install with: pip install kara-toolkit[huggingface]"
+            ) from exc
+
+        self.model_name = model_name
+        self._tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    def create_chunks(self, text: str) -> List[List[Any]]:
+        """Split text into optimally-sized token chunks."""
+        units = self._split_to_units(text)
+        return self._merge_units_greedy(units, self.chunk_size)
+
+    def _split_to_units(self, text: str) -> List[str]:
+        """Split text into token strings using a Hugging Face tokenizer."""
+        token_ids = self._tokenizer.encode(text, add_special_tokens=False)
+        return [
+            self._tokenizer.decode([token_id], clean_up_tokenization_spaces=False)
+            for token_id in token_ids
+        ]
+
+    def unit_length(self, unit: Any) -> int:
+        """Treat each token unit as length 1."""
+        return 1
