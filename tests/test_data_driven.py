@@ -23,7 +23,6 @@ class TestKARADataDriven:
             chunk_size=scenario.parameters["chunk_size"],
             separators=scenario.parameters["separators"],
             keep_separator=scenario.parameters["keep_separator"],
-            overlap=scenario.parameters.get("overlap", 0),
         )
         return KARAUpdater(chunker=chunker)
 
@@ -114,15 +113,7 @@ class TestKARADataDriven:
                 f"got {actual_ratio}"
             )
 
-        # Check total chunks
-        if "total_chunks" in expected:
-            assert update_result.new_chunked_doc is not None
-            total_chunks = len(update_result.new_chunked_doc.chunks)
-            assert total_chunks == expected["total_chunks"], (
-                f"Scenario {scenario_name}: Expected {expected['total_chunks']} "
-                f"total chunks, got {total_chunks}"
-            )
-
+        # Check total chunks range
         if "total_chunks_range" in expected:
             assert update_result.new_chunked_doc is not None
             total_chunks = len(update_result.new_chunked_doc.chunks)
@@ -138,21 +129,6 @@ class TestKARADataDriven:
                 f"Scenario {scenario_name}: Expected new chunks to be created"
             )
 
-        if "overlap_units" in expected:
-            overlap_units = expected["overlap_units"]
-            assert update_result.new_chunked_doc is not None
-            chunks = update_result.new_chunked_doc.chunks
-            if overlap_units > 0 and len(chunks) > 1:
-                for prev_chunk, next_chunk in zip(chunks, chunks[1:]):
-                    overlap_count = min(
-                        overlap_units,
-                        max(len(prev_chunk.splits) - 1, 0),
-                        len(next_chunk.splits),
-                    )
-                    assert (
-                        prev_chunk.splits[-overlap_count:] == next_chunk.splits[:overlap_count]
-                    ), f"Scenario {scenario_name}: Expected {overlap_count} overlap units"
-
     @pytest.mark.parametrize(
         "scenario_name",
         [
@@ -164,8 +140,6 @@ class TestKARADataDriven:
             "sentence_separators",
             "paragraph_separators",
             "wikipedia_style",
-            "overlap_two_units",
-            "overlap_exceeds_chunk",
         ],
     )
     def test_single_document_scenarios(

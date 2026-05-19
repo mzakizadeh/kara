@@ -2,10 +2,9 @@
 Document chunkers for breaking documents into optimal chunks.
 """
 
-import json
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Optional, Sequence, Union
+from typing import Callable, List, Optional, Union
 
 
 class BaseDocumentChunker(ABC):
@@ -17,7 +16,7 @@ class BaseDocumentChunker(ABC):
 
         Args:
             chunk_size: Maximum size of each chunk
-            overlap: Overlap between chunks in units
+            overlap: Overlap between chunks (for future implementation)
         """
         if chunk_size <= 0:
             raise ValueError("chunk_size must be positive")
@@ -27,43 +26,16 @@ class BaseDocumentChunker(ABC):
         self.overlap = overlap
 
     @abstractmethod
-    def create_chunks(self, text: str) -> List[List[Any]]:
+    def create_chunks(self, text: str) -> List[str]:
         """Split text into optimally-sized chunks."""
         pass
 
     @abstractmethod
-    def _split_to_units(self, text: str) -> List[Any]:
+    def _split_to_units(self, text: str) -> List[str]:
         """Split text into smallest units (e.g., by separators, tokens)."""
         pass
 
-    def normalize_chunk(self, chunk: Any) -> List[Any]:
-        """Normalize a chunk to a list of units."""
-        if isinstance(chunk, str):
-            return self._split_to_units(chunk)
-        if isinstance(chunk, (list, tuple)):
-            return list(chunk)
-        raise TypeError("Chunk must be a string or a sequence of units.")
-
-    def unit_length(self, unit: Any) -> int:
-        """Return the unit length for sizing and chunk limits."""
-        if isinstance(unit, str):
-            return len(unit)
-        return 1
-
-    def serialize_units(self, units: Sequence[Any]) -> bytes:
-        """Serialize units to bytes for hashing."""
-        if all(isinstance(unit, str) for unit in units):
-            return "".join(units).encode("utf-8")
-        serialized = json.dumps(list(units), separators=(",", ":"), ensure_ascii=True)
-        return serialized.encode("utf-8")
-
-    def render_units(self, units: Sequence[Any]) -> Any:
-        """Render units for output or storage."""
-        if all(isinstance(unit, str) for unit in units):
-            return "".join(units)
-        return list(units)
-
-    def _merge_units_greedy(self, units: List[Any], max_chunk_size: int) -> List[List[Any]]:
+    def _merge_units_greedy(self, units: List[str], max_chunk_size: int) -> List[str]:
         """
         Merge units greedily to create chunks within size limit.
 
@@ -77,40 +49,28 @@ class BaseDocumentChunker(ABC):
         if not units:
             return []
 
-        def chunk_length(chunk_units: List[Any]) -> int:
-            return sum(self.unit_length(unit) for unit in chunk_units)
+        def unit_length(unit: str) -> int:
+            return len(unit)
 
-        chunks: List[List[Any]] = []
-        overlap_units = self.overlap
-        start = 0
-        units_count = len(units)
+        def chunk_length(chunk_units: List[str]) -> int:
+            return sum(len(unit) for unit in chunk_units)
 
-        while start < units_count:
-            current_chunk: List[str] = []
-            current_length = 0
-            end = start
+        chunks = []
+        current_chunk: List[str] = []
 
-            while end < units_count:
-                unit = units[end]
-                unit_len = self.unit_length(unit)
-                if current_length > 0 and current_length + unit_len > max_chunk_size:
-                    break
-                current_chunk.append(unit)
-                current_length += unit_len
-                end += 1
-
-            if not current_chunk:
-                break
-
-            chunks.append(current_chunk)
-
-            if end >= units_count:
-                break
-
-            if overlap_units > 0:
-                start = max(start + 1, end - overlap_units)
+        for unit in units:
+            # If adding this unit would exceed the max size, start a new chunk
+            if current_chunk and chunk_length(current_chunk) + unit_length(unit) > max_chunk_size:
+                # Only add non-empty chunks
+                if current_chunk:
+                    chunks.append("".join(current_chunk))
+                current_chunk = [unit]
             else:
-                start = end
+                current_chunk.append(unit)
+
+        # Add the last chunk if it's not empty
+        if current_chunk:
+            chunks.append("".join(current_chunk))
 
         return chunks
 
@@ -127,7 +87,9 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
         self,
         separators: Optional[List[str]] = None,
         chunk_size: int = 4000,
-        overlap: int = 0,
+        # TODO: The algorithm currently does not support overlap
+        # This is a placeholder for future implementation
+        # overlap: int = 0,
         keep_separator: bool = True,
     ):
         """
@@ -136,14 +98,15 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
         Args:
             separators: List of separators to try, in order of preference
             chunk_size: Maximum chunk size in characters. Defaults to 4000
-            overlap: Overlap between chunks in units
+            overlap: Overlap between chunks (not implemented yet)
             keep_separator: Whether to keep separators in the result
         """
+        overlap = 0  # Placeholder for future implementation
         super().__init__(chunk_size=chunk_size, overlap=overlap)
         self.separators = separators or ["\n\n", "\n", " "]
         self.keep_separator = keep_separator
 
-    def create_chunks(self, text: str) -> List[List[Any]]:
+    def create_chunks(self, text: str) -> List[str]:
         """
         Split text into optimally-sized chunks.
 
@@ -151,7 +114,7 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
             text: Input text to split
 
         Returns:
-            List of chunks as unit lists
+            List of chunks
         """
         # First, split into smallest units
         units = self._split_to_units(text)
@@ -214,7 +177,7 @@ class RecursiveTokenChunker(BaseDocumentChunker):
 
     def __init__(
         self,
-        tokenizer_function: Callable[[str], List[Any]],
+        tokenizer_function: Callable[[str], List[str]],
         chunk_size: int = 512,
         overlap: int = 0,
     ):
@@ -229,7 +192,11 @@ class RecursiveTokenChunker(BaseDocumentChunker):
         super().__init__(chunk_size=chunk_size, overlap=overlap)
         self.tokenizer_function = tokenizer_function
 
-    def create_chunks(self, text: str) -> List[List[Any]]:
+    def _default_tokenizer(self, text: str) -> List[str]:
+        """Default tokenizer that splits on whitespace."""
+        return text.split()
+
+    def create_chunks(self, text: str) -> List[str]:
         """
         Split text into token-based chunks.
 
@@ -237,7 +204,7 @@ class RecursiveTokenChunker(BaseDocumentChunker):
             text: Input text to split
 
         Returns:
-            List of chunks as token lists
+            List of chunks
         """
         # First, split into tokens
         tokens = self._split_to_units(text)
@@ -245,11 +212,11 @@ class RecursiveTokenChunker(BaseDocumentChunker):
         # Then, greedily merge into chunks
         return self._merge_tokens_greedy(tokens)
 
-    def _split_to_units(self, text: str) -> List[Any]:
+    def _split_to_units(self, text: str) -> List[str]:
         """Split text into token units."""
         return self.tokenizer_function(text)
 
-    def _merge_tokens_greedy(self, tokens: List[Any]) -> List[List[Any]]:
+    def _merge_tokens_greedy(self, tokens: List[str]) -> List[str]:
         """
         Merge tokens greedily to create chunks within token limit.
 
@@ -262,24 +229,20 @@ class RecursiveTokenChunker(BaseDocumentChunker):
         if not tokens:
             return []
 
-        chunks: List[List[str]] = []
-        overlap_units = self.overlap
-        start = 0
-        tokens_count = len(tokens)
+        chunks = []
+        current_chunk_tokens: List[str] = []
 
-        while start < tokens_count:
-            end = min(start + self.chunk_size, tokens_count)
-            chunk_tokens = tokens[start:end]
-            if not chunk_tokens:
-                break
-            chunks.append(chunk_tokens)
-
-            if end >= tokens_count:
-                break
-
-            if overlap_units > 0:
-                start = max(start + 1, end - overlap_units)
+        for token in tokens:
+            # If adding this token would exceed the max size, start a new chunk
+            if len(current_chunk_tokens) >= self.chunk_size:
+                if current_chunk_tokens:
+                    chunks.append(" ".join(current_chunk_tokens))
+                current_chunk_tokens = [token]
             else:
-                start = end
+                current_chunk_tokens.append(token)
+
+        # Add the last chunk if it's not empty
+        if current_chunk_tokens:
+            chunks.append(" ".join(current_chunk_tokens))
 
         return chunks

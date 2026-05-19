@@ -16,8 +16,11 @@
     "expected_results": {
         "min_reused_chunks": 2,
         "efficiency_ratio_threshold": 0.5,
-        "new_chunks_expected": true,
-        "total_chunks": 4
+        "total_chunks_range": [
+            4,
+            4
+        ],
+        "new_chunks_expected": true
     },
     "tags": [
         "separators",

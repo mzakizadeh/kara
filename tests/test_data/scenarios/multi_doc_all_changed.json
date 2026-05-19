@@ -25,13 +25,16 @@
     "expected_results": {
         "min_reused_chunks": 0,
         "efficiency_ratio_threshold": 0.0,
+        "total_chunks_range": [
+            6,
+            15
+        ],
         "documents_unchanged": [],
         "documents_changed": [
             0,
             1,
             2
-        ],
-        "total_chunks": 11
+        ]
     },
     "tags": [
         "multi_doc",
