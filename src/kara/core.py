@@ -123,13 +123,26 @@ class KARAUpdater:
     def __init__(
         self,
         chunker: BaseDocumentChunker,
+        imperfect_chunk_tolerance: int = 99,
     ):
         """
         Initialize the KARA updater.
 
         Args:
             chunker: Document chunker for breaking documents into optimal chunks
+            imperfect_chunk_tolerance: How many imperfect chunks can be tolerated before
+                                     preferring to create a new optimal chunk. Higher values
+                                     favor reusing existing chunks more aggressively.
+                                     - imperfect_chunk_tolerance=0: No tolerance (greedy merging)
+                                     - imperfect_chunk_tolerance=1: Tolerate 1 imperfect chunk
+                                     - imperfect_chunk_tolerance=9: Moderate reuse (old epsilon≈0.1)
+                                     - imperfect_chunk_tolerance=99: Aggressive reuse
         """
+        if imperfect_chunk_tolerance < 0:
+            raise ValueError("imperfect_chunk_tolerance must be non-negative")
+
+        # Convert to epsilon using the formula: epsilon = 1/(tolerance + 1)
+        self.epsilon = 1.0 / (imperfect_chunk_tolerance + 1)
         self.chunker = chunker
         self.max_chunk_size = getattr(chunker, "chunk_size", 1000)
 
@@ -265,9 +278,6 @@ class KARAUpdater:
         # Build graph of possible chunks for this document
         edges: List[List[Tuple[int, float, List[str], str]]] = [[] for _ in range(N + 1)]
 
-        max_chunk_size = self.max_chunk_size
-        max_chunk_size_float = float(max_chunk_size)
-
         for i in range(N):
             current_length = 0
             chunk_splits = []
@@ -280,24 +290,22 @@ class KARAUpdater:
 
                     # A single split cannot exceed the max chunk size
                     # TODO: handle the edge case in which all splits are larger than max_chunk_size
-                    if len(split) > max_chunk_size:
+                    if len(split) > self.max_chunk_size:
                         raise ValueError(
-                            f"Split length {len(split)} exceeds max chunk size {max_chunk_size}."
+                            f"Split length {len(split)} exceeds max chunk size "
+                            f"{self.max_chunk_size}."
                         )
 
-                if current_length > max_chunk_size:
+                if current_length > self.max_chunk_size:
                     break
 
                 chunk_str = "".join(chunk_splits)
                 chunk_hash = hashlib.md5(chunk_str.encode("utf-8")).hexdigest()
 
-                fill_rate = current_length / max_chunk_size_float
-                penalty = (1 - fill_rate) ** 2
-
                 if chunk_hash in old_chunk_hashes:
-                    cost = penalty
+                    cost = self.epsilon
                 else:
-                    cost = 1.0 + penalty
+                    cost = 1.0
 
                 edges[i].append((j, cost, chunk_splits.copy(), chunk_hash))
 
