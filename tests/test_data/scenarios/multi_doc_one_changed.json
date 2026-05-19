@@ -14,7 +14,6 @@
     ],
     "parameters": {
         "chunk_size": 40,
-        "imperfect_chunk_tolerance": 10,
         "separators": [
             "\n\n",
             "\n",
