@@ -140,3 +140,60 @@ class TestRecursiveTokenChunker:
         chunker = RecursiveTokenChunker(tokenizer_function=str.split, chunk_size=2)
 
         assert chunker.create_chunks("") == []
+
+
+class TestChunkOverlap:
+    """Tests for overlap functionality."""
+
+    def test_recursive_character_chunker_overlap(self) -> None:
+        """Test that setting overlap correctly builds overlapping chunks using KARAUpdater."""
+        from kara.core import ChunkedDocument, KARAUpdater
+        from kara.splitters import RecursiveCharacterChunker
+
+        text = "123456 7890 abcd"
+        empty_kb = ChunkedDocument(chunks=[])
+
+        # Test without overlap
+        chunker_no_overlap = RecursiveCharacterChunker(
+            chunk_size=10, overlap=0, separators=[" "], keep_separator=True
+        )
+        updater_no_overlap = KARAUpdater(chunker=chunker_no_overlap)
+
+        result_no_overlap = updater_no_overlap.update_knowledge_base(empty_kb, [text])
+        assert result_no_overlap.new_chunked_doc is not None
+        chunks_no_overlap = result_no_overlap.new_chunked_doc.get_chunk_contents()
+        assert len(chunks_no_overlap) == 2
+
+        # Test with overlap=1
+        chunker_overlap = RecursiveCharacterChunker(
+            chunk_size=10, overlap=1, separators=[" "], keep_separator=True
+        )
+        updater_overlap = KARAUpdater(chunker=chunker_overlap)
+
+        result_overlap = updater_overlap.update_knowledge_base(empty_kb, [text])
+        assert result_overlap.new_chunked_doc is not None
+        chunks_overlap = result_overlap.new_chunked_doc.get_chunk_contents()
+
+        assert any("7890" in c for c in chunks_overlap[1:])
+        assert len(chunks_overlap) >= 2
+
+    def test_recursive_token_chunker_overlap(self) -> None:
+        """Test overlapping token-based chunks."""
+        from kara.core import ChunkedDocument, KARAUpdater
+        from kara.splitters import RecursiveTokenChunker
+
+        text = "A B C D E"
+
+        chunker_overlap = RecursiveTokenChunker(
+            tokenizer_function=str.split, chunk_size=3, overlap=2
+        )
+        updater = KARAUpdater(chunker=chunker_overlap)
+
+        empty_kb = ChunkedDocument(chunks=[])
+        result = updater.update_knowledge_base(empty_kb, [text])
+        assert result.new_chunked_doc is not None
+        chunks = result.new_chunked_doc.get_chunk_contents()
+
+        assert chunks[0] == "ABC"
+        assert chunks[1] == "BCD"
+        assert chunks[2] == "CDE"

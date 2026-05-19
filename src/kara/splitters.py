@@ -16,7 +16,7 @@ class BaseDocumentChunker(ABC):
 
         Args:
             chunk_size: Maximum size of each chunk
-            overlap: Overlap between chunks (for future implementation)
+            overlap: Overlap between chunks
         """
         if chunk_size <= 0:
             raise ValueError("chunk_size must be positive")
@@ -87,9 +87,7 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
         self,
         separators: Optional[List[str]] = None,
         chunk_size: int = 4000,
-        # TODO: The algorithm currently does not support overlap
-        # This is a placeholder for future implementation
-        # overlap: int = 0,
+        overlap: int = 0,
         keep_separator: bool = True,
     ):
         """
@@ -98,10 +96,9 @@ class RecursiveCharacterChunker(BaseDocumentChunker):
         Args:
             separators: List of separators to try, in order of preference
             chunk_size: Maximum chunk size in characters. Defaults to 4000
-            overlap: Overlap between chunks (not implemented yet)
+            overlap: Overlap between chunks
             keep_separator: Whether to keep separators in the result
         """
-        overlap = 0  # Placeholder for future implementation
         super().__init__(chunk_size=chunk_size, overlap=overlap)
         self.separators = separators or ["\n\n", "\n", " "]
         self.keep_separator = keep_separator

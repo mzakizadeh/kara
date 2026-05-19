@@ -256,6 +256,7 @@ class KARAUpdater:
             UpdateResult with new chunks and statistics for this document
         """
         N = len(new_splits)
+        overlap_units = getattr(self.chunker, "overlap", 0)
         if N == 0:
             return UpdateResult(
                 num_deleted=0,  # Will be calculated at the end
@@ -299,7 +300,13 @@ class KARAUpdater:
                 else:
                     cost = 1.0 + penalty
 
-                edges[i].append((j, cost, chunk_splits.copy(), chunk_hash))
+                # Calculate next_node considering overlap
+                if j == N:
+                    next_node = N
+                else:
+                    next_node = max(i + 1, j - overlap_units)
+
+                edges[i].append((next_node, cost, chunk_splits.copy(), chunk_hash))
 
         # Find optimal path using Dijkstra's algorithm with edge count tie-breaking
         int_inf: int = sys.maxsize

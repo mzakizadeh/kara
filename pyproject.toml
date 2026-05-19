@@ -99,7 +99,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--cov=kara --cov-report=html --cov-report=term-missing"
+
 
 [tool.setuptools_scm]
 write_to = "src/kara/_version.py"
