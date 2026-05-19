@@ -12,7 +12,7 @@
         "keep_separator": true
     },
     "expected_results": {},
-    "expected_exception": "AssertionError",
+    "expected_exception": "ValueError",
     "expected_exception_message": "Split length 8 exceeds max chunk size 5.",
     "expect_failure": true,
     "tags": [

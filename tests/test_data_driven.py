@@ -33,12 +33,7 @@ class TestKARADataDriven:
             # Handle scenarios that expect exceptions
             if scenario.expected_exception:
                 # Get the exception class from string name
-                exception_class = scenario.expected_exception
-                if hasattr(Exception, scenario.expected_exception):
-                    import sys
-
-                    exception_class = getattr(sys.modules["builtins"], scenario.expected_exception)
-
+                exception_class = getattr(__builtins__, scenario.expected_exception, Exception)
                 with pytest.raises(exception_class) as exc_info:
                     self._execute_scenario_logic(scenario)
 
