@@ -6,6 +6,7 @@
     "updated_text": "Short modified text.",
     "parameters": {
         "chunk_size": 1000,
+        "max_imperfect_chunks": 10,
         "separators": [
             "\n\n",
             "\n",
