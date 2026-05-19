@@ -71,7 +71,7 @@ class TestRecursiveCharacterChunker:
         result = chunker.create_chunks(sample_text)
 
         assert len(result) > 0
-        assert all(isinstance(chunk, str) for chunk in result)
+        assert all(isinstance(chunk, list) for chunk in result)
 
     def test_keep_separator(self, sample_text: str) -> None:
         """Test chunking with separator preservation."""
@@ -80,7 +80,7 @@ class TestRecursiveCharacterChunker:
 
         # Count newlines in original vs result
         original_newlines = sample_text.count("\n")
-        result_newlines = sum(chunk.count("\n") for chunk in result)
+        result_newlines = sum("".join(chunk).count("\n") for chunk in result)
 
         # Should preserve most newlines (some might be at the end)
         assert result_newlines >= original_newlines - 1
@@ -91,7 +91,7 @@ class TestRecursiveCharacterChunker:
         result = chunker.create_chunks(sample_text)
 
         # Should have removed newlines
-        assert all("\n" not in chunk for chunk in result)
+        assert all("\n" not in "".join(chunk) for chunk in result)
 
     def test_empty_text(self) -> None:
         """Test chunking empty text."""
@@ -106,7 +106,7 @@ class TestRecursiveCharacterChunker:
         result = chunker.create_chunks("line1\nline2\nline3")
 
         assert len(result) >= 1
-        assert all(isinstance(chunk, str) for chunk in result)
+        assert all(isinstance(chunk, list) for chunk in result)
 
 
 class TestRecursiveTokenChunker:
@@ -123,7 +123,7 @@ class TestRecursiveTokenChunker:
         assert len(chunks) == 3
         # Each chunk should contain at most 3 tokens
         for chunk in chunks:
-            assert len(chunk.split()) <= 3
+            assert len(chunk) <= 3
 
     def test_exact_multiple_of_chunk_size(self) -> None:
         """Tokens equal to a multiple of chunk_size should divide evenly."""
@@ -133,7 +133,7 @@ class TestRecursiveTokenChunker:
         chunks = chunker.create_chunks(text)
 
         assert len(chunks) == 2
-        assert all(len(chunk.split()) == 3 for chunk in chunks)
+        assert all(len(chunk) == 3 for chunk in chunks)
 
     def test_empty_text(self) -> None:
         """Test that empty input returns no chunks."""
