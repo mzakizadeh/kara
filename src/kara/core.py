@@ -31,7 +31,6 @@ class ChunkData:
         renderer: Optional[Callable[[Sequence[Any]], Any]] = None,
     ) -> "ChunkData":
         """Create ChunkData from splits."""
-        content: Any
         if renderer is None:
             if all(isinstance(unit, str) for unit in splits):
                 content = "".join(splits)
