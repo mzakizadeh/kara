@@ -6,7 +6,6 @@
     "updated_text": "The weather is sunny today. It's a beautiful day for a hike.",
     "parameters": {
         "chunk_size": 20,
-        "imperfect_chunk_tolerance": 100,
         "separators": [
             "\n\n",
             "\n",
