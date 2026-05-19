@@ -218,16 +218,13 @@ class KARAUpdater:
         # Process each document separately and combine results
         all_new_chunks: List[ChunkData] = []
         combined_result = UpdateResult()
-        old_chunk_counts: Dict[str, int] = {}
-        for chunk in current_kb.chunks:
-            old_chunk_counts[chunk.hash] = old_chunk_counts.get(chunk.hash, 0) + 1
-
-        used_counts: Dict[str, int] = {}
+        old_chunk_hashes = current_kb.get_chunk_hashes()
+        used_hashes: Set[str] = set()
 
         for doc_id, document in enumerate(documents):
             new_splits = self.chunker._split_to_units(document)
             doc_result = self._update_chunks_for_document(
-                current_kb, new_splits, doc_id, set(old_chunk_counts.keys())
+                current_kb, new_splits, doc_id, old_chunk_hashes
             )
 
             assert doc_result.new_chunked_doc is not None
@@ -237,14 +234,13 @@ class KARAUpdater:
 
             # Track which hashes are used across all documents
             for chunk in doc_result.new_chunked_doc.chunks:
-                if chunk.hash in old_chunk_counts:
-                    used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+                if chunk.hash in old_chunk_hashes:
+                    used_hashes.add(chunk.hash)
 
-        # Count deleted chunks considering duplicate hashes
-        for chunk_hash, count in old_chunk_counts.items():
-            reused_count = used_counts.get(chunk_hash, 0)
-            if reused_count < count:
-                combined_result.num_deleted += count - reused_count
+        # Count deleted chunks that are not reused by any document
+        for chunk_hash in old_chunk_hashes:
+            if chunk_hash not in used_hashes:
+                combined_result.num_deleted += 1
 
         # Create the final chunked document
         combined_result.new_chunked_doc = ChunkedDocument(chunks=all_new_chunks)
@@ -381,26 +377,21 @@ class KARAUpdater:
         Returns:
             UpdateResult with new chunks and statistics
         """
-        old_chunk_counts: Dict[str, int] = {}
-        for chunk in current_kb.chunks:
-            old_chunk_counts[chunk.hash] = old_chunk_counts.get(chunk.hash, 0) + 1
+        old_chunk_hashes = current_kb.get_chunk_hashes()
 
         # Use the new multi-document method with document_id = 0
-        doc_result = self._update_chunks_for_document(
-            current_kb, new_splits, 0, set(old_chunk_counts.keys())
-        )
+        doc_result = self._update_chunks_for_document(current_kb, new_splits, 0, old_chunk_hashes)
 
         # Count deleted chunks that are not reused
-        used_counts: Dict[str, int] = {}
+        used_hashes: Set[str] = set()
         assert doc_result.new_chunked_doc is not None
         for chunk in doc_result.new_chunked_doc.chunks:
-            if chunk.hash in old_chunk_counts:
-                used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+            if chunk.hash in old_chunk_hashes:
+                used_hashes.add(chunk.hash)
 
         # Count deleted chunks
-        for chunk_hash, count in old_chunk_counts.items():
-            reused_count = used_counts.get(chunk_hash, 0)
-            if reused_count < count:
-                doc_result.num_deleted += count - reused_count
+        for chunk_hash in old_chunk_hashes:
+            if chunk_hash not in used_hashes:
+                doc_result.num_deleted += 1
 
         return doc_result
