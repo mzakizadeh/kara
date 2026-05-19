@@ -28,7 +28,6 @@ class KARATextSplitter(TextSplitter):
         self,
         chunk_size: int = 4000,
         separators: Optional[List[str]] = None,
-        imperfect_chunk_tolerance: int = 99,
         previous_chunks: Optional[List[str]] = None,
         **kwargs: Any,
     ):
@@ -37,9 +36,6 @@ class KARATextSplitter(TextSplitter):
 
         Args:
             separators: List of separators to use for splitting
-            imperfect_chunk_tolerance: How many imperfect chunks can be tolerated before
-                                     preferring to create a new optimal chunk. Higher values
-                                     favor reusing existing chunks more aggressively.
             is_separator_regex: Whether separators are regex patterns
             **kwargs: Additional arguments passed to TextSplitter
         """
@@ -55,7 +51,6 @@ class KARATextSplitter(TextSplitter):
         # Initialize KARA updater
         self.kara_updater = KARAUpdater(
             chunker=self._kara_chunker,
-            imperfect_chunk_tolerance=imperfect_chunk_tolerance,
         )
 
         # Store current knowledge base
