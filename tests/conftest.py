@@ -1,5 +1,5 @@
 """
-Test configuration for KARA.
+Test configuration for PyKara.
 """
 
 import os
