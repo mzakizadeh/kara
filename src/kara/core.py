@@ -55,10 +55,12 @@ class ChunkedDocument:
     def from_chunks(
         cls, chunks: List[str], chunker: BaseDocumentChunker, document_id: Optional[int] = None
     ) -> "ChunkedDocument":
-        """Create a :class:`ChunkedDocument` from pre-split chunks.
+        """
+        Create a ChunkedDocument from a list of texts using the specified separators.
 
         Args:
-            chunks: List of text chunks to include
+            texts: List of text strings to chunk
+            separators: List of separators to use for chunking
             document_id: Optional document identifier
 
         Returns:
