@@ -301,7 +301,7 @@ class KARAUpdater:
             )
 
         # Build graph of possible chunks for this document
-        edges: List[List[Tuple[int, float, List[str], str]]] = [[] for _ in range(N + 1)]
+        edges: List[List[Tuple[int, float, List[Any], str]]] = [[] for _ in range(N + 1)]
 
         max_chunk_size = self.max_chunk_size
         max_chunk_size_float = float(max_chunk_size)
@@ -355,7 +355,7 @@ class KARAUpdater:
         min_cost[0] = 0
         min_num_edges[0] = 0
         previous_node: List[Optional[int]] = [None] * (N + 1)
-        previous_edge: List[Optional[Tuple[int, float, List[str], str]]] = [None] * (N + 1)
+        previous_edge: List[Optional[Tuple[int, float, List[Any], str]]] = [None] * (N + 1)
 
         heap: List[Tuple[float, int, int]] = [(0, 0, 0)]  # (cost, edge_count, node)
 
