@@ -1,0 +1,25 @@
+{
+    "name": "Repetitive Chunks",
+    "description": "Text with many repetitive chunks to ensure statistics correctly count reused chunks without overcounting.",
+    "test_type": "single_document",
+    "initial_text": "Hello Hello Hello",
+    "updated_text": "Hello Hello Hello Hello Hello Hello Hello",
+    "parameters": {
+        "chunk_size": 10,
+        "separators": [
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "reused_chunks": 3,
+        "efficiency_ratio": 0.42857142857142855,
+        "new_chunks_expected": true,
+        "total_chunks": 7
+    },
+    "tags": [
+        "repetitive",
+        "statistics",
+        "single_doc"
+    ]
+}

@@ -241,13 +241,19 @@ class KARAUpdater:
 
             assert doc_result.new_chunked_doc is not None
             all_new_chunks.extend(doc_result.new_chunked_doc.chunks)
-            combined_result.num_added += doc_result.num_added
-            combined_result.num_reused += doc_result.num_reused
 
             # Track which hashes are used across all documents
             for chunk in doc_result.new_chunked_doc.chunks:
-                if chunk.hash in old_chunk_counts:
-                    used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+                used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+
+        # Calculate added and reused chunks based on inventory
+        combined_result.num_added = 0
+        combined_result.num_reused = 0
+        for chunk_hash, count in used_counts.items():
+            old_count = old_chunk_counts.get(chunk_hash, 0)
+            reused = min(count, old_count)
+            combined_result.num_reused += reused
+            combined_result.num_added += count - reused
 
         # Count deleted chunks considering duplicate hashes
         for chunk_hash, count in old_chunk_counts.items():
@@ -383,11 +389,6 @@ class KARAUpdater:
             )
             new_chunks.insert(0, chunk_data)
 
-            if chunk_hash in old_chunk_hashes:
-                result.num_reused += 1
-            else:
-                result.num_added += 1
-
             prev_node = previous_node[node]
             if prev_node is None:
                 break
@@ -417,14 +418,23 @@ class KARAUpdater:
             current_kb, new_splits, 0, set(old_chunk_counts.keys())
         )
 
-        # Count deleted chunks that are not reused
+        # Count used chunks
         used_counts: Dict[str, int] = {}
         assert doc_result.new_chunked_doc is not None
         for chunk in doc_result.new_chunked_doc.chunks:
-            if chunk.hash in old_chunk_counts:
-                used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+            used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+
+        # Calculate added and reused chunks based on inventory
+        doc_result.num_added = 0
+        doc_result.num_reused = 0
+        for chunk_hash, count in used_counts.items():
+            old_count = old_chunk_counts.get(chunk_hash, 0)
+            reused = min(count, old_count)
+            doc_result.num_reused += reused
+            doc_result.num_added += count - reused
 
         # Count deleted chunks
+        doc_result.num_deleted = 0
         for chunk_hash, count in old_chunk_counts.items():
             reused_count = used_counts.get(chunk_hash, 0)
             if reused_count < count:

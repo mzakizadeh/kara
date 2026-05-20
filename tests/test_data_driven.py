@@ -164,6 +164,7 @@ class TestKARADataDriven:
             "wikipedia_style",
             "overlap_two_units",
             "overlap_exceeds_chunk",
+            "repetitive_chunks",
         ],
     )
     def test_single_document_scenarios(

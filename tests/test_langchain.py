@@ -39,7 +39,7 @@ def test_kara_text_splitter_with_custom_chunker() -> None:
 def test_kara_text_splitter_from_tiktoken() -> None:
     """Test creating KARATextSplitter from tiktoken encoder."""
     try:
-        import tiktoken
+        import tiktoken  # noqa: F401
     except ImportError:
         pytest.skip("tiktoken not installed")
 
@@ -58,6 +58,11 @@ def test_kara_text_splitter_from_tiktoken() -> None:
 
 def test_kara_text_splitter_from_huggingface(mocker: Any) -> None:
     """Test creating KARATextSplitter from Hugging Face tokenizer with mocking."""
+    try:
+        from transformers import AutoTokenizer  # noqa: F401
+    except ImportError:
+        pytest.skip("transformers not installed")
+
     import sys
     from unittest.mock import MagicMock
 
