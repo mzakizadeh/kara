@@ -4,6 +4,7 @@ These tests focus on testing individual classes and methods in isolation.
 For integration testing and scenario-based testing, see test_data_driven.py.
 """
 
+from typing import List
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -58,14 +59,14 @@ class TestChunkedDocument:
         chunk1 = ChunkData.from_splits(["Hello"])
         chunk2 = ChunkData.from_splits(["World"])
 
-        doc = ChunkedDocument(chunks=[chunk1, chunk2])
+        doc: ChunkedDocument[str] = ChunkedDocument(chunks=[chunk1, chunk2])
         contents = doc.get_chunk_contents()
 
         assert contents == ["Hello", "World"]
 
     def test_empty_document(self) -> None:
         """Test creating an empty chunked document."""
-        doc = ChunkedDocument(chunks=[])
+        doc: ChunkedDocument[str] = ChunkedDocument(chunks=[])
 
         assert doc.get_chunk_hashes() == set()
         assert doc.get_chunk_contents() == []
@@ -123,21 +124,28 @@ class TestTokenChunker:
 
     def test_basic_token_chunking(self) -> None:
         """Test that token-based chunking respects the chunk_size."""
-        text = "one two three four five six seven"
-        chunker = TokenChunker(tokenizer_function=str.split, chunk_size=3)
+
+        def mock_tokenizer(text: str) -> List[int]:
+            return [ord(c) for c in text.replace(" ", "")]
+
+        # text has 7 words, but mock_tokenizer returns length of text without spaces
+        text = "a b c d e f g"
+        chunker = TokenChunker(tokenizer_function=mock_tokenizer, chunk_size=3)
 
         chunks = chunker.create_chunks(text)
 
-        # Expect ceil(7/3) = 3 chunks
-        assert len(chunks) == 3
-        # Each chunk should contain at most 3 tokens
+        assert len(chunks) == 3  # 7 / 3 = 2.33 -> 3 chunks
         for chunk in chunks:
             assert len(chunk) <= 3
 
     def test_exact_multiple_of_chunk_size(self) -> None:
         """Tokens equal to a multiple of chunk_size should divide evenly."""
+
+        def mock_tokenizer(text: str) -> List[int]:
+            return [1] * len(text.split())
+
         text = "tok1 tok2 tok3 tok4 tok5 tok6"
-        chunker = TokenChunker(tokenizer_function=str.split, chunk_size=3)
+        chunker = TokenChunker(tokenizer_function=mock_tokenizer, chunk_size=3)
 
         chunks = chunker.create_chunks(text)
 
@@ -146,8 +154,11 @@ class TestTokenChunker:
 
     def test_empty_text(self) -> None:
         """Test that empty input returns no chunks."""
-        chunker = TokenChunker(tokenizer_function=str.split, chunk_size=2)
 
+        def mock_tokenizer(text: str) -> List[int]:
+            return []
+
+        chunker = TokenChunker(tokenizer_function=mock_tokenizer, chunk_size=2)
         assert chunker.create_chunks("") == []
 
 
@@ -174,15 +185,12 @@ class TestOpenAITokenChunker:
         mock_get_encoding.return_value = mock_encoding
         # Mock encoding.encode to return some token IDs
         mock_encoding.encode.return_value = [1, 2, 3]
-        # Mock encoding.decode to return string representations
-        mock_encoding.decode.side_effect = ["one", "two", "three"]
 
         chunker = OpenAITokenChunker()
         units = chunker._split_to_units("one two three")
 
-        assert units == ["one", "two", "three"]
+        assert units == [1, 2, 3]
         mock_encoding.encode.assert_called_once_with("one two three")
-        assert mock_encoding.decode.call_count == 3
 
     @patch("tiktoken.get_encoding")
     def test_create_chunks(self, mock_get_encoding: MagicMock) -> None:
@@ -190,7 +198,6 @@ class TestOpenAITokenChunker:
         mock_encoding = MagicMock()
         mock_get_encoding.return_value = mock_encoding
         mock_encoding.encode.return_value = [1, 2, 3, 4, 5]
-        mock_encoding.decode.side_effect = ["1", "2", "3", "4", "5"]
 
         # chunk_size=3, overlap=1
         # Chunk 1: [1, 2, 3]
@@ -199,14 +206,27 @@ class TestOpenAITokenChunker:
         chunks = chunker.create_chunks("1 2 3 4 5")
 
         assert len(chunks) == 2
-        assert chunks[0] == ["1", "2", "3"]
-        assert chunks[1] == ["3", "4", "5"]
+        assert chunks[0] == [1, 2, 3]
+        assert chunks[1] == [3, 4, 5]
+
+    @patch("tiktoken.get_encoding")
+    def test_render_units(self, mock_get_encoding: MagicMock) -> None:
+        """Test rendering token units."""
+        mock_encoding = MagicMock()
+        mock_get_encoding.return_value = mock_encoding
+        mock_encoding.decode.return_value = "one two"
+
+        chunker = OpenAITokenChunker()
+        content = chunker.render_units([1, 2])
+
+        assert content == "one two"
+        mock_encoding.decode.assert_called_once_with([1, 2])
 
     @patch("tiktoken.get_encoding")
     def test_unit_length(self, mock_get_encoding: MagicMock) -> None:
         """Test that each token unit has length 1."""
         chunker = OpenAITokenChunker()
-        assert chunker.unit_length("any_token") == 1
+        assert chunker.unit_length(123) == 1
 
     def test_tiktoken_not_installed(self) -> None:
         """Test that ImportError is raised when tiktoken is not installed."""
@@ -237,12 +257,11 @@ class TestHuggingFaceTokenChunker:
         mock_tokenizer = MagicMock()
         mock_from_pretrained.return_value = mock_tokenizer
         mock_tokenizer.encode.return_value = [10, 20, 30]
-        mock_tokenizer.decode.side_effect = ["a", "b", "c"]
 
         chunker = HuggingFaceTokenChunker(model_name="test")
         units = chunker._split_to_units("abc")
 
-        assert units == ["a", "b", "c"]
+        assert units == [10, 20, 30]
         mock_tokenizer.encode.assert_called_once_with("abc", add_special_tokens=False)
 
     @patch("transformers.AutoTokenizer.from_pretrained")
@@ -251,7 +270,6 @@ class TestHuggingFaceTokenChunker:
         mock_tokenizer = MagicMock()
         mock_from_pretrained.return_value = mock_tokenizer
         mock_tokenizer.encode.return_value = [1, 2, 3, 4]
-        mock_tokenizer.decode.side_effect = ["1", "2", "3", "4"]
 
         # chunk_size=2, overlap=1
         # Chunk 1: [1, 2]
@@ -261,15 +279,28 @@ class TestHuggingFaceTokenChunker:
         chunks = chunker.create_chunks("1 2 3 4")
 
         assert len(chunks) == 3
-        assert chunks[0] == ["1", "2"]
-        assert chunks[1] == ["2", "3"]
-        assert chunks[2] == ["3", "4"]
+        assert chunks[0] == [1, 2]
+        assert chunks[1] == [2, 3]
+        assert chunks[2] == [3, 4]
+
+    @patch("transformers.AutoTokenizer.from_pretrained")
+    def test_render_units(self, mock_from_pretrained: MagicMock) -> None:
+        """Test rendering token units."""
+        mock_tokenizer = MagicMock()
+        mock_from_pretrained.return_value = mock_tokenizer
+        mock_tokenizer.decode.return_value = "1 2"
+
+        chunker = HuggingFaceTokenChunker(model_name="test")
+        content = chunker.render_units([1, 2])
+
+        assert content == "1 2"
+        mock_tokenizer.decode.assert_called_once_with([1, 2], clean_up_tokenization_spaces=False)
 
     @patch("transformers.AutoTokenizer.from_pretrained")
     def test_unit_length(self, mock_from_pretrained: MagicMock) -> None:
         """Test that each token unit has length 1."""
         chunker = HuggingFaceTokenChunker(model_name="test")
-        assert chunker.unit_length("any_token") == 1
+        assert chunker.unit_length(123) == 1
 
     def test_transformers_not_installed(self) -> None:
         """Test that ImportError is raised when transformers is not installed."""
