@@ -10,7 +10,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
 
-from .splitters import BaseDocumentChunker
+from .chunkers import BaseDocumentChunker
 
 
 @dataclass
@@ -163,23 +163,8 @@ class KARAUpdater:
         Args:
             chunker: Document chunker for breaking documents into optimal chunks
         """
-        self.chunker = chunker
-        self.max_chunk_size = getattr(chunker, "chunk_size", 1000)
-
-    def _get_chunker_config(self) -> Dict[str, Any]:
-        """
-        Get configuration parameters from the chunker.
-
-        Returns:
-            Dictionary with chunker configuration
-        """
-        config = {
-            "chunk_size": getattr(self.chunker, "chunk_size", None),
-            "separators": getattr(self.chunker, "separators", None),
-            "keep_separator": getattr(self.chunker, "keep_separator", None),
-            "chunker_type": type(self.chunker).__name__,
-        }
-        return config
+        self.chunker: BaseDocumentChunker = chunker
+        self.max_chunk_size: int = chunker.chunk_size
 
     def create_knowledge_base(self, documents: List[str]) -> UpdateResult:
         """
@@ -306,7 +291,7 @@ class KARAUpdater:
 
         max_chunk_size = self.max_chunk_size
         max_chunk_size_float = float(max_chunk_size)
-        overlap_units = getattr(self.chunker, "overlap", 0)
+        overlap_units = self.chunker.overlap
         unit_length = self.chunker.unit_length
 
         for i in range(N):

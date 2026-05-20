@@ -41,6 +41,8 @@ langchain = [
     "langchain_core>=0.0.1",
     "langchain_text_splitters>=0.0.1",
 ]
+openai = ["tiktoken>=0.5.0"]
+huggingface = ["transformers>=4.38.0"]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
@@ -49,7 +51,7 @@ dev = [
     "pre-commit>=3.0.0",
 ]
 doc = ["sphinx==8.2.3", "sphinx-rtd-theme==3.0.2"]
-all = ["kara-toolkit[langchain,dev]"]
+all = ["kara-toolkit[langchain,openai,huggingface,dev]"]
 
 [project.urls]
 Homepage = "https://github.com/mzakizadeh/kara"
@@ -88,7 +90,7 @@ indent-style = "space"
 known-first-party = ["kara-toolkit"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

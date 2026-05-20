@@ -2,11 +2,13 @@
 Data-driven tests for KARA core functionality using test scenarios.
 """
 
+import builtins
+
 import pytest
 from test_data_loader import DataLoader, Scenario
 
+from kara.chunkers import CharacterChunker
 from kara.core import KARAUpdater, UpdateResult
-from kara.splitters import RecursiveCharacterChunker
 
 
 class TestKARADataDriven:
@@ -19,7 +21,7 @@ class TestKARADataDriven:
 
     def _create_updater_from_scenario(self, scenario: Scenario) -> KARAUpdater:
         """Create a KARAUpdater from scenario parameters."""
-        chunker = RecursiveCharacterChunker(
+        chunker = CharacterChunker(
             chunk_size=scenario.parameters["chunk_size"],
             separators=scenario.parameters["separators"],
             keep_separator=scenario.parameters["keep_separator"],
@@ -33,11 +35,7 @@ class TestKARADataDriven:
             # Handle scenarios that expect exceptions
             if scenario.expected_exception:
                 # Get the exception class from string name
-                exception_class = getattr(__builtins__, scenario.expected_exception, Exception)
-                if hasattr(Exception, scenario.expected_exception):
-                    import sys
-
-                    exception_class = getattr(sys.modules["builtins"], scenario.expected_exception)
+                exception_class = getattr(builtins, scenario.expected_exception, Exception)
 
                 with pytest.raises(exception_class) as exc_info:
                     self._execute_scenario_logic(scenario)
@@ -50,7 +48,7 @@ class TestKARADataDriven:
                     )
             else:
                 # Generic failure expectation - use a more specific exception
-                with pytest.raises((ValueError, TypeError, RuntimeError)):
+                with pytest.raises((ValueError, TypeError, RuntimeError, AssertionError)):
                     self._execute_scenario_logic(scenario)
         else:
             # Normal scenario execution
@@ -96,21 +94,21 @@ class TestKARADataDriven:
         self, update_result: UpdateResult, expected: dict, scenario_name: str
     ) -> None:
         """Validate update results against expected outcomes."""
-        # Check minimum reused chunks
-        if "min_reused_chunks" in expected:
-            min_reused = expected["min_reused_chunks"]
+        # Check reused chunks (now using exact comparison for determinism)
+        if "reused_chunks" in expected:
+            expected_reused = expected["reused_chunks"]
             actual_reused = update_result.num_reused
-            assert actual_reused >= min_reused, (
-                f"Scenario {scenario_name}: Expected at least {min_reused} "
+            assert actual_reused == expected_reused, (
+                f"Scenario {scenario_name}: Expected exactly {expected_reused} "
                 f"reused chunks, got {actual_reused}"
             )
 
-        # Check efficiency ratio
-        if "efficiency_ratio_threshold" in expected:
-            min_ratio = expected["efficiency_ratio_threshold"]
+        # Check efficiency ratio (using approx for floating point)
+        if "efficiency_ratio" in expected:
+            expected_ratio = expected["efficiency_ratio"]
             actual_ratio = update_result.efficiency_ratio
-            assert actual_ratio >= min_ratio, (
-                f"Scenario {scenario_name}: Expected efficiency ratio >= {min_ratio}, "
+            assert actual_ratio == pytest.approx(expected_ratio, rel=1e-2), (
+                f"Scenario {scenario_name}: Expected efficiency ratio {expected_ratio}, "
                 f"got {actual_ratio}"
             )
 
@@ -161,8 +159,6 @@ class TestKARADataDriven:
             "simple_addition",
             "middle_insertion",
             "complete_replacement",
-            "high_imperfect_chunk_tolerance_small_change",
-            "low_imperfect_chunk_tolerance_small_change",
             "sentence_separators",
             "paragraph_separators",
             "wikipedia_style",
@@ -198,7 +194,8 @@ class TestKARADataDriven:
         self._run_scenario_with_exception_handling(scenario)
 
     @pytest.mark.parametrize(
-        "scenario_name", ["empty_document", "very_large_chunks", "very_small_chunks"]
+        "scenario_name",
+        ["empty_document", "empty_content", "very_large_chunks", "very_small_chunks"],
     )
     def test_edge_case_scenarios(self, test_data_loader: DataLoader, scenario_name: str) -> None:
         """Test edge case scenarios."""

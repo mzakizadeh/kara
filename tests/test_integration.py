@@ -2,8 +2,8 @@
 Integration tests using examples from the examples directory.
 """
 
+from kara.chunkers import CharacterChunker
 from kara.core import KARAUpdater
-from kara.splitters import RecursiveCharacterChunker
 
 
 class TestExamplesIntegration:
@@ -29,9 +29,7 @@ class TestExamplesIntegration:
         )
 
         # Create chunker and updater
-        chunker = RecursiveCharacterChunker(
-            chunk_size=50, separators=[". ", " "], keep_separator=True
-        )
+        chunker = CharacterChunker(chunk_size=50, separators=[". ", " "], keep_separator=True)
         updater = KARAUpdater(chunker=chunker)
 
         # Create initial knowledge base
@@ -79,7 +77,7 @@ class TestExamplesIntegration:
         )
 
         # Use similar parameters to the LangChain example
-        chunker = RecursiveCharacterChunker(
+        chunker = CharacterChunker(
             chunk_size=50, separators=["\n\n", "\n", ". ", " "], keep_separator=True
         )
         updater = KARAUpdater(chunker=chunker)
@@ -127,9 +125,7 @@ class TestExamplesIntegration:
         ]
 
         # Create chunker and updater
-        chunker = RecursiveCharacterChunker(
-            chunk_size=40, separators=[". ", " "], keep_separator=True
-        )
+        chunker = CharacterChunker(chunk_size=40, separators=[". ", " "], keep_separator=True)
         updater = KARAUpdater(chunker=chunker)
 
         # Create initial knowledge base
@@ -186,7 +182,7 @@ class TestExamplesIntegration:
 
         results = []
         for config in separator_configs:
-            chunker = RecursiveCharacterChunker(
+            chunker = CharacterChunker(
                 chunk_size=config["chunk_size"],  # type: ignore
                 separators=config["separators"],  # type: ignore
                 keep_separator=True,
