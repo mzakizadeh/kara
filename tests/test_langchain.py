@@ -1,10 +1,12 @@
+from typing import Any
+
 import pytest
 
 from kara.chunkers import CharacterChunker, OpenAITokenChunker
 from kara.integrations.langchain import KARATextSplitter
 
 
-def test_kara_text_splitter_basic():
+def test_kara_text_splitter_basic() -> None:
     """Test basic functionality of KARATextSplitter."""
     text = "This is a test sentence. This is another test sentence."
     chunker = CharacterChunker(chunk_size=50, overlap=0, separators=[". "])
@@ -22,7 +24,7 @@ def test_kara_text_splitter_basic():
     assert "This is a NEW test sentence." in updated_chunks[1]
 
 
-def test_kara_text_splitter_with_custom_chunker():
+def test_kara_text_splitter_with_custom_chunker() -> None:
     """Test KARATextSplitter with a custom chunker."""
     custom_chunker = CharacterChunker(chunk_size=10, separators=[" "])
     splitter = KARATextSplitter(chunker=custom_chunker)
@@ -34,7 +36,7 @@ def test_kara_text_splitter_with_custom_chunker():
     assert len(chunks) > 1
 
 
-def test_kara_text_splitter_from_tiktoken():
+def test_kara_text_splitter_from_tiktoken() -> None:
     """Test creating KARATextSplitter from tiktoken encoder."""
     try:
         import tiktoken
@@ -54,7 +56,7 @@ def test_kara_text_splitter_from_tiktoken():
     assert len(chunks) > 0
 
 
-def test_kara_text_splitter_from_huggingface(mocker):
+def test_kara_text_splitter_from_huggingface(mocker: Any) -> None:
     """Test creating KARATextSplitter from Hugging Face tokenizer with mocking."""
     import sys
     from unittest.mock import MagicMock
@@ -86,7 +88,7 @@ def test_kara_text_splitter_from_huggingface(mocker):
     del sys.modules["transformers"]
 
 
-def test_kara_text_splitter_previous_chunks():
+def test_kara_text_splitter_previous_chunks() -> None:
     """Test KARATextSplitter with previous chunks."""
     previous_chunks = ["Chunk 1", "Chunk 2"]
     chunker = CharacterChunker(chunk_size=10)

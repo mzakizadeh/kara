@@ -2,7 +2,7 @@
 LangChain integration for kara-toolkit.
 """
 
-from typing import Any, List, Optional
+from typing import AbstractSet, Any, Collection, List, Literal, Optional, Union
 
 try:
     from langchain_text_splitters.base import TextSplitter
@@ -63,9 +63,9 @@ class KARATextSplitter(TextSplitter):
     def from_tiktoken_encoder(
         cls,
         encoding_name: str = "cl100k_base",
-        chunk_size: int = 512,
-        chunk_overlap: int = 0,
-        previous_chunks: Optional[List[str]] = None,
+        model_name: Optional[str] = None,
+        allowed_special: Union[Literal["all"], AbstractSet[str]] = set(),
+        disallowed_special: Union[Literal["all"], Collection[str]] = "all",
         **kwargs: Any,
     ) -> "KARATextSplitter":
         """
@@ -73,15 +73,19 @@ class KARATextSplitter(TextSplitter):
 
         Args:
             encoding_name: tiktoken encoding name
-            chunk_size: Maximum size of each chunk in tokens
-            chunk_overlap: Overlap between chunks in tokens
-            previous_chunks: Optional list of previous chunks
+            model_name: Optional model name
+            allowed_special: Allowed special tokens
+            disallowed_special: Disallowed special tokens
             **kwargs: Additional arguments passed to KARATextSplitter
 
         Returns:
             Initialized KARATextSplitter
         """
         from ..chunkers import OpenAITokenChunker
+
+        chunk_size = kwargs.pop("chunk_size", 512)
+        chunk_overlap = kwargs.pop("chunk_overlap", 0)
+        previous_chunks = kwargs.pop("previous_chunks", None)
 
         chunker = OpenAITokenChunker(
             encoding_name=encoding_name,
@@ -97,26 +101,31 @@ class KARATextSplitter(TextSplitter):
     @classmethod
     def from_huggingface_tokenizer(
         cls,
-        model_name: str,
-        chunk_size: int = 512,
-        chunk_overlap: int = 0,
-        previous_chunks: Optional[List[str]] = None,
+        tokenizer: Any = None,
         **kwargs: Any,
     ) -> "KARATextSplitter":
         """
         Create a KARATextSplitter using HuggingFaceTokenChunker.
 
         Args:
-            model_name: Hugging Face model name or path
-            chunk_size: Maximum size of each chunk in tokens
-            chunk_overlap: Overlap between chunks in tokens
-            previous_chunks: Optional list of previous chunks
+            tokenizer: HuggingFace tokenizer instance (or model name string for backcompat)
             **kwargs: Additional arguments passed to KARATextSplitter
 
         Returns:
             Initialized KARATextSplitter
         """
         from ..chunkers import HuggingFaceTokenChunker
+
+        chunk_size = kwargs.pop("chunk_size", 512)
+        chunk_overlap = kwargs.pop("chunk_overlap", 0)
+        previous_chunks = kwargs.pop("previous_chunks", None)
+
+        model_name = kwargs.pop("model_name", None)
+        if model_name is None:
+            if isinstance(tokenizer, str):
+                model_name = tokenizer
+            else:
+                model_name = getattr(tokenizer, "name_or_path", "gpt2")
 
         chunker = HuggingFaceTokenChunker(
             model_name=model_name,
