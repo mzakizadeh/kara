@@ -300,7 +300,7 @@ class OpenAITokenChunker(BaseDocumentChunker):
     def __init__(
         self,
         encoding_name: str = "cl100k_base",
-        chunk_size: int = 512,
+        chunk_size: int = 1000,
         overlap: int = 0,
     ):
         """
@@ -344,7 +344,7 @@ class HuggingFaceTokenChunker(BaseDocumentChunker):
     def __init__(
         self,
         model_name: str,
-        chunk_size: int = 512,
+        chunk_size: int = 1000,
         overlap: int = 0,
     ):
         """
