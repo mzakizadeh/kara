@@ -6,7 +6,6 @@
     "updated_text": "First paragraph about machine learning fundamentals and core concepts.\n\nSecond paragraph discussing neural networks.\n\nThird paragraph covering applications.\n\nFourth paragraph about future developments.",
     "parameters": {
         "chunk_size": 80,
-        "max_imperfect_chunks": 10,
         "separators": [
             "\n\n",
             "\n",
@@ -15,13 +14,10 @@
         "keep_separator": true
     },
     "expected_results": {
-        "min_reused_chunks": 0,
-        "efficiency_ratio_threshold": 0.0,
-        "total_chunks_range": [
-            3,
-            6
-        ],
-        "new_chunks_expected": true
+        "reused_chunks": 0,
+        "efficiency_ratio": 0.0,
+        "new_chunks_expected": true,
+        "total_chunks": 3
     },
     "tags": [
         "separators",

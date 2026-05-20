@@ -6,14 +6,13 @@
     "updated_text": "Testing very small chunk sizes with this modified text.",
     "parameters": {
         "chunk_size": 5,
-        "max_imperfect_chunks": 1000000,
         "separators": [
             " "
         ],
         "keep_separator": true
     },
     "expected_results": {},
-    "expected_exception": "AssertionError",
+    "expected_exception": "ValueError",
     "expected_exception_message": "Split length 8 exceeds max chunk size 5.",
     "expect_failure": true,
     "tags": [

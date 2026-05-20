@@ -14,7 +14,6 @@
     ],
     "parameters": {
         "chunk_size": 25,
-        "max_imperfect_chunks": 20,
         "separators": [
             "\n\n",
             "\n",
@@ -24,18 +23,15 @@
         "keep_separator": true
     },
     "expected_results": {
-        "min_reused_chunks": 0,
-        "efficiency_ratio_threshold": 0.0,
-        "total_chunks_range": [
-            6,
-            15
-        ],
+        "reused_chunks": 1,
+        "efficiency_ratio": 0.091,
         "documents_unchanged": [],
         "documents_changed": [
             0,
             1,
             2
-        ]
+        ],
+        "total_chunks": 11
     },
     "tags": [
         "multi_doc",

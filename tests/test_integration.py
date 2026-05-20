@@ -2,8 +2,8 @@
 Integration tests using examples from the examples directory.
 """
 
+from kara.chunkers import CharacterChunker
 from kara.core import KARAUpdater
-from kara.splitters import RecursiveCharacterChunker
 
 
 class TestExamplesIntegration:
@@ -29,10 +29,8 @@ class TestExamplesIntegration:
         )
 
         # Create chunker and updater
-        chunker = RecursiveCharacterChunker(
-            chunk_size=50, separators=[". ", " "], keep_separator=True
-        )
-        updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=9)
+        chunker = CharacterChunker(chunk_size=50, separators=[". ", " "], keep_separator=True)
+        updater = KARAUpdater(chunker=chunker)
 
         # Create initial knowledge base
         initial_result = updater.create_knowledge_base([original_doc])
@@ -79,10 +77,10 @@ class TestExamplesIntegration:
         )
 
         # Use similar parameters to the LangChain example
-        chunker = RecursiveCharacterChunker(
+        chunker = CharacterChunker(
             chunk_size=50, separators=["\n\n", "\n", ". ", " "], keep_separator=True
         )
-        updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=9)
+        updater = KARAUpdater(chunker=chunker)
 
         # Process original document
         original_result = updater.create_knowledge_base([original_doc])
@@ -127,10 +125,8 @@ class TestExamplesIntegration:
         ]
 
         # Create chunker and updater
-        chunker = RecursiveCharacterChunker(
-            chunk_size=40, separators=[". ", " "], keep_separator=True
-        )
-        updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=9)
+        chunker = CharacterChunker(chunk_size=40, separators=[". ", " "], keep_separator=True)
+        updater = KARAUpdater(chunker=chunker)
 
         # Create initial knowledge base
         initial_result = updater.create_knowledge_base(initial_docs)
@@ -162,67 +158,6 @@ class TestExamplesIntegration:
         print(f"  Chunks deleted: {update_result.num_deleted}")
         print(f"  Efficiency ratio: {update_result.efficiency_ratio:.2f}")
 
-    def test_imperfect_chunk_tolerance_comparison_workflow(self) -> None:
-        """Test comparing different imperfect_chunk_tolerance values."""
-        text_original = "The quick brown fox jumps over the lazy dog."
-        text_updated = "The quick brown fox jumps over the sleeping dog."
-
-        chunker = RecursiveCharacterChunker(chunk_size=20, separators=[" "], keep_separator=True)
-
-        # Test different imperfect_chunk_tolerance values
-        # imperfect_chunk_tolerance=99 is similar to old epsilon=0.01
-        # imperfect_chunk_tolerance=9 is similar to old epsilon=0.1
-        # imperfect_chunk_tolerance=1 is similar to old epsilon=0.5
-        # imperfect_chunk_tolerance=0 is similar to old epsilon=1.0 (greedy)
-        imperfect_chunk_tolerance_values = [99, 9, 1, 0]
-        results = []
-
-        for imperfect_chunk_tolerance in imperfect_chunk_tolerance_values:
-            updater = KARAUpdater(
-                chunker=chunker, imperfect_chunk_tolerance=imperfect_chunk_tolerance
-            )
-
-            # Create and update
-            initial_result = updater.create_knowledge_base([text_original])
-            assert initial_result.new_chunked_doc is not None
-            update_result = updater.update_knowledge_base(
-                initial_result.new_chunked_doc, [text_updated]
-            )
-
-            results.append(
-                {
-                    "imperfect_chunk_tolerance": imperfect_chunk_tolerance,
-                    "reused": update_result.num_reused,
-                    "added": update_result.num_added,
-                    "deleted": update_result.num_deleted,
-                    "efficiency": update_result.efficiency_ratio,
-                }
-            )
-
-        # Validate that different imperfect_chunk_tolerance values produce different behaviors
-        # With a small change like this, high imperfect_chunk_tolerance should reuse more
-        high_tolerance_efficiency = next(
-            r["efficiency"] for r in results if r["imperfect_chunk_tolerance"] == 99
-        )
-
-        # This assertion might be flexible depending on the specific chunking
-        # but generally high imperfect_chunk_tolerance should provide some efficiency
-        assert high_tolerance_efficiency >= 0, (
-            "High imperfect_chunk_tolerance should provide some efficiency"
-        )
-
-        print("Imperfect chunk tolerance comparison results:")
-        print("Tolerance | Reused | Added | Deleted | Efficiency")
-        print("-" * 50)
-        for result in results:
-            print(
-                f"{result['imperfect_chunk_tolerance']:9d} | "
-                f"{result['reused']:6d} | "
-                f"{result['added']:5d} | "
-                f"{result['deleted']:7d} | "
-                f"{result['efficiency']:9.2f}"
-            )
-
     def test_separator_comparison_workflow(self) -> None:
         """Test different separator configurations."""
         text = (
@@ -247,12 +182,12 @@ class TestExamplesIntegration:
 
         results = []
         for config in separator_configs:
-            chunker = RecursiveCharacterChunker(
+            chunker = CharacterChunker(
                 chunk_size=config["chunk_size"],  # type: ignore
                 separators=config["separators"],  # type: ignore
                 keep_separator=True,
             )
-            updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=10)
+            updater = KARAUpdater(chunker=chunker)
 
             # Create and update
             initial_result = updater.create_knowledge_base([text])

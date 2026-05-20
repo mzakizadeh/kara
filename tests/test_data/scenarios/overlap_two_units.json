@@ -1,0 +1,25 @@
+{
+    "name": "Overlap Two Units",
+    "description": "Overlap of two units should be preserved between adjacent chunks",
+    "test_type": "single_document",
+    "initial_text": "alpha beta gamma delta epsilon zeta eta theta",
+    "updated_text": "alpha beta gamma delta epsilon zeta eta theta",
+    "parameters": {
+        "chunk_size": 15,
+        "overlap": 2,
+        "separators": [
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "reused_chunks": 6,
+        "efficiency_ratio": 1.0,
+        "total_chunks": 6,
+        "overlap_units": 2
+    },
+    "tags": [
+        "overlap",
+        "single_doc"
+    ]
+}

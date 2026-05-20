@@ -6,7 +6,6 @@
     "updated_text": "Short modified text.",
     "parameters": {
         "chunk_size": 1000,
-        "max_imperfect_chunks": 10,
         "separators": [
             "\n\n",
             "\n",
@@ -15,13 +14,10 @@
         "keep_separator": true
     },
     "expected_results": {
-        "min_reused_chunks": 0,
-        "efficiency_ratio_threshold": 0.0,
-        "total_chunks_range": [
-            1,
-            1
-        ],
-        "new_chunks_expected": true
+        "reused_chunks": 0,
+        "efficiency_ratio": 0.0,
+        "new_chunks_expected": true,
+        "total_chunks": 1
     },
     "tags": [
         "edge_case",

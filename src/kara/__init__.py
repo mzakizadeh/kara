@@ -14,17 +14,21 @@ except ImportError:
 __author__ = "Mahdi Zakizadeh"
 __email__ = "mzakizadeh.me@gmail.com"
 
-from .core import KARAUpdater, UpdateResult
-from .splitters import (
+from .chunkers import (
     BaseDocumentChunker,
-    RecursiveCharacterChunker,
-    RecursiveTokenChunker,
+    CharacterChunker,
+    HuggingFaceTokenChunker,
+    OpenAITokenChunker,
+    TokenChunker,
 )
+from .core import KARAUpdater, UpdateResult
 
 __all__ = [
     "KARAUpdater",
     "UpdateResult",
     "BaseDocumentChunker",
-    "RecursiveCharacterChunker",
-    "RecursiveTokenChunker",
+    "CharacterChunker",
+    "TokenChunker",
+    "OpenAITokenChunker",
+    "HuggingFaceTokenChunker",
 ]

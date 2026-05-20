@@ -12,54 +12,82 @@ KARA is a Python library that efficiently updates knowledge bases by reducing un
 
 ## Installation
 
+Install KARA with your preferred framework and provider:
+
 ```bash
+# Core only
 pip install kara-toolkit
 
-# With LangChain integration
-pip install kara-toolkit[langchain]
+# For OpenAI + LangChain
+pip install "kara-toolkit[openai,langchain]"
+
+# For Hugging Face + LangChain
+pip install "kara-toolkit[huggingface,langchain]"
+
+# Install everything
+pip install "kara-toolkit[all]"
 ```
 
 ## Key Parameters
 
-| Parameter                   | Type         | Default | Description                                                                                                                                                                                                                 |
-|-----------------------------|--------------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `imperfect_chunk_tolerance` | `int`        | `9`     | Controls the trade-off between reusing existing chunks and creating new, perfectly-sized ones.<br><br>- `0`: No tolerance; disables chunk reuse.<br>- `1`: Prefers new chunk over two imperfect ones.<br>- `9`: Balanced default.<br>- `99+`: Maximizes reuse, less uniform sizes. |
-| `chunk_size`                | `int`        | `500`   | Target size (in characters) for each text chunk.                                                                                                                                                                            |
-| `separators`                | `List[str]`  | `["\n\n", "\n", " "]`       | List of strings used to split the text. If not provided, uses default separators from `RecursiveCharacterChunker`.                                                                     |
+| Parameter    | Type  | Default | Description                                                                   |
+|--------------|-------|---------|-------------------------------------------------------------------------------|
+| `chunk_size` | `int` | `1000`   | Maximum size of each chunk (typically measured in tokens).                    |
+| `overlap`    | `int` | `0`     | Number of overlapping units (tokens) between consecutive chunks.              |
 
 ## Quick Start
 
-```python
-from kara import KARAUpdater, RecursiveCharacterChunker
+KARA is designed for token-level precision. Here is how to use it with OpenAI's `tiktoken`:
 
-# Initialize
-chunker = RecursiveCharacterChunker(chunk_size=500)
-updater = KARAUpdater(chunker=chunker, imperfect_chunk_tolerance=9)
+```python
+from kara import OpenAITokenChunker, KARAUpdater
+
+# Initialize with token-based chunking
+chunker = OpenAITokenChunker(encoding_name="cl100k_base", chunk_size=512)
+updater = KARAUpdater(chunker=chunker)
 
 # Process initial documents
-result = updater.create_knowledge_base(["Your document content..."])
+result = updater.create_knowledge_base(["Your long document text..."])
 
-# Update with new content - reuses existing chunks automatically
+# Update with modified content - reuses existing token chunks automatically
 update_result = updater.update_knowledge_base(
     result.new_chunked_doc,
-    ["Updated document content..."]
+    ["Your updated document text..."]
 )
 
 print(f"Efficiency: {update_result.efficiency_ratio:.1%}")
-print(f"Chunks reused: {update_result.num_reused}")
+print(f"Tokens reused: {update_result.num_reused * 512} (approx)")
 ```
 
 ## LangChain Integration
+
+KARA provides dedicated factory methods for seamless LangChain integration:
 
 ```python
 from kara.integrations.langchain import KARATextSplitter
 from langchain_core.documents import Document
 
-# Use as a drop-in replacement for LangChain text splitters
-splitter = KARATextSplitter(chunk_size=300, imperfect_chunk_tolerance=2)
+# Create a token-aware splitter for OpenAI
+splitter = KARATextSplitter.from_tiktoken_encoder(
+    encoding_name="cl100k_base",
+    chunk_size=512,
+    chunk_overlap=50
+)
 
-docs = [Document(page_content="Your content...", metadata={"source": "file.pdf"})]
+# Use as a standard LangChain splitter
+docs = [Document(page_content="Your content...", metadata={"source": "manual.pdf"})]
 chunks = splitter.split_documents(docs)
+
+# Later, update with a new version of the document to see efficiency gains
+# KARATextSplitter automatically manages state for incremental updates
+```
+
+For Hugging Face models:
+```python
+splitter = KARATextSplitter.from_huggingface_tokenizer(
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    chunk_size=256
+)
 ```
 
 
@@ -71,30 +99,29 @@ See [`examples/`](examples/) for complete usage examples.
 ## How It Works
 
 KARA formulates chunking as a graph optimization problem:
-1. Creates a DAG where nodes are split positions and edges are potential chunks
-2. Uses Dijkstra's algorithm to find optimal chunking paths
-3. Automatically reuses existing chunks to minimize embedding costs
+1. Creates a Directed Acyclic Graph (DAG) where nodes are split positions and edges are potential chunks.
+2. Assigns costs to edges: reused chunks have a lower cost based on their fill rate, while new chunks have an additional penalty.
+3. Uses Dijkstra's algorithm to find the shortest path (lowest cost), which corresponds to the optimal chunking strategy that maximizes reuse.
 
-<!-- Typical efficiency gains: 70-90% fewer embeddings for document updates. -->
+Typical efficiency gains: 70-90% fewer embedding operations for document updates.
 
 
 ## Limitations
 
 While KARA provides significant efficiency improvements for knowledge base updates, there are some current limitations to be aware of:
 
-- **Document Version Dependency**: The biggest limitation is that you need to keep the last version of documents to identify reusable chunks. However, you may be able to reconstruct document content using saved chunks in your vector store to reduce storage overhead. When compared to LangChain's indexing solution ([documented here](https://python.langchain.com/docs/how_to/indexing/)), which maintains a separate SQL database for chunk hashes while being extremely inefficient, our approach is still superior.
+- **Document Version Dependency**: You need to keep the last version of documents to identify reusable chunks. However, you may be able to reconstruct document content using saved chunks in your vector store to reduce storage overhead. When compared to LangChain's indexing solution ([documented here](https://python.langchain.com/docs/how_to/indexing/)), which maintains a separate SQL database for chunk hashes while being extremely inefficient, our approach is still superior.
 
-- **Chunking Configuration Changes**: You likely cannot change splitting configurations (chunk size, separator characters) between updates, as this may disrupt the algorithm's optimal solution. We have not yet tested the extent to which configuration changes impact performance.
-
-- **No Chunk Overlap Support**: We currently do not support overlapping chunks, but we are investigating whether this feature can be added in future versions.
+- **Chunking Configuration Changes**: Changing splitting configurations (chunk size, separators) between updates may disrupt the algorithm's ability to reuse chunks effectively.
 
 ## Roadmap to 1.0.0
 
+- [x] **Token-Based Optimal Chunking** - Support for OpenAI and Hugging Face tokenizers
+- [x] **Overlapping Chunk Support** - Support for overlapping units between chunks
 - [ ] **100% Test Coverage** - Complete test suite with full coverage
 - [ ] **Performance Benchmarks** - Real-world efficiency testing
 - [ ] **Framework Support** - LlamaIndex, Haystack, and others
 - [ ] **Complete Documentation** - API reference, guides, and examples
-- [ ] **Token-Based Optimal Chunking** - Extend algorithm to support token-based chunking strategies
 
 ## License
 

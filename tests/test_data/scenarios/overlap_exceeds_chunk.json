@@ -1,0 +1,26 @@
+{
+    "name": "Overlap Exceeds Chunk",
+    "description": "Overlap larger than chunk length should still reuse all available units",
+    "test_type": "single_document",
+    "initial_text": "a b c d e f g h i j k",
+    "updated_text": "a b c d e f g h i j k",
+    "parameters": {
+        "chunk_size": 8,
+        "overlap": 10,
+        "separators": [
+            " "
+        ],
+        "keep_separator": true
+    },
+    "expected_results": {
+        "reused_chunks": 8,
+        "efficiency_ratio": 1.0,
+        "total_chunks": 8,
+        "overlap_units": 10
+    },
+    "tags": [
+        "overlap",
+        "edge_case",
+        "single_doc"
+    ]
+}
