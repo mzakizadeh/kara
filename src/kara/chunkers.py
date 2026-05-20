@@ -5,10 +5,24 @@ Document chunkers for breaking documents into optimal chunks.
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Optional, Sequence, Union
+from typing import (
+    AbstractSet,
+    Any,
+    Callable,
+    Collection,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+)
+
+T = TypeVar("T")
 
 
-class BaseDocumentChunker(ABC):
+class BaseDocumentChunker(ABC, Generic[T]):
     """Abstract base class for document chunkers."""
 
     def __init__(self, chunk_size: int = 1000, overlap: int = 0):
@@ -27,16 +41,16 @@ class BaseDocumentChunker(ABC):
         self.overlap = overlap
 
     @abstractmethod
-    def create_chunks(self, text: str) -> List[List[Any]]:
+    def create_chunks(self, text: str) -> List[List[T]]:
         """Split text into optimally-sized chunks."""
         pass
 
     @abstractmethod
-    def _split_to_units(self, text: str) -> List[Any]:
+    def _split_to_units(self, text: str) -> List[T]:
         """Split text into smallest units (e.g., by separators, tokens)."""
         pass
 
-    def normalize_chunk(self, chunk: Any) -> List[Any]:
+    def normalize_chunk(self, chunk: Any) -> List[T]:
         """Normalize a chunk to a list of units."""
         if isinstance(chunk, str):
             return self._split_to_units(chunk)
@@ -44,26 +58,26 @@ class BaseDocumentChunker(ABC):
             return list(chunk)
         raise TypeError("Chunk must be a string or a sequence of units.")
 
-    def unit_length(self, unit: Any) -> int:
+    def unit_length(self, unit: T) -> int:
         """Return the unit length for sizing and chunk limits."""
         if isinstance(unit, str):
             return len(unit)
         return 1
 
-    def serialize_units(self, units: Sequence[Any]) -> bytes:
+    def serialize_units(self, units: Sequence[T]) -> bytes:
         """Serialize units to bytes for hashing."""
         if all(isinstance(unit, str) for unit in units):
-            return "".join(units).encode("utf-8")
+            return "".join(units).encode("utf-8")  # type: ignore
         serialized = json.dumps(list(units), separators=(",", ":"), ensure_ascii=True)
         return serialized.encode("utf-8")
 
-    def render_units(self, units: Sequence[Any]) -> Any:
+    def render_units(self, units: Sequence[T]) -> Any:
         """Render units for output or storage."""
         if all(isinstance(unit, str) for unit in units):
-            return "".join(units)
+            return "".join(units)  # type: ignore
         return list(units)
 
-    def _merge_units_greedy(self, units: List[Any], max_chunk_size: int) -> List[List[Any]]:
+    def _merge_units_greedy(self, units: List[T], max_chunk_size: int) -> List[List[T]]:
         """
         Merge units greedily to create chunks within size limit.
 
@@ -115,7 +129,7 @@ class BaseDocumentChunker(ABC):
         return chunks
 
 
-class CharacterChunker(BaseDocumentChunker):
+class CharacterChunker(BaseDocumentChunker[str]):
     """
     Recursive character-based chunker that tries multiple separators.
 
@@ -143,7 +157,7 @@ class CharacterChunker(BaseDocumentChunker):
         self.separators = separators or ["\n\n", "\n", " "]
         self.keep_separator = keep_separator
 
-    def create_chunks(self, text: str) -> List[List[Any]]:
+    def create_chunks(self, text: str) -> List[List[str]]:
         """
         Split text into optimally-sized chunks.
 
@@ -204,7 +218,7 @@ class CharacterChunker(BaseDocumentChunker):
         return [s for s in splits if s]
 
 
-class TokenChunker(BaseDocumentChunker):
+class TokenChunker(BaseDocumentChunker[int]):
     """
     Token-based chunker that splits text into tokens and merges them greedily.
 
@@ -214,7 +228,7 @@ class TokenChunker(BaseDocumentChunker):
 
     def __init__(
         self,
-        tokenizer_function: Callable[[str], List[Any]],
+        tokenizer_function: Optional[Callable[[str], List[int]]] = None,
         chunk_size: int = 512,
         overlap: int = 0,
     ):
@@ -229,7 +243,7 @@ class TokenChunker(BaseDocumentChunker):
         super().__init__(chunk_size=chunk_size, overlap=overlap)
         self.tokenizer_function = tokenizer_function
 
-    def create_chunks(self, text: str) -> List[List[Any]]:
+    def create_chunks(self, text: str) -> List[List[int]]:
         """
         Split text into token-based chunks.
 
@@ -243,13 +257,17 @@ class TokenChunker(BaseDocumentChunker):
         tokens = self._split_to_units(text)
 
         # Then, greedily merge into chunks
-        return self._merge_tokens_greedy(tokens)
+        return self._merge_units_greedy(tokens, self.chunk_size)
 
-    def _split_to_units(self, text: str) -> List[Any]:
+    def _split_to_units(self, text: str) -> List[int]:
         """Split text into token units."""
+        if self.tokenizer_function is None:
+            raise NotImplementedError(
+                "_split_to_units must be implemented by subclasses or a tokenizer_function provided"
+            )
         return self.tokenizer_function(text)
 
-    def unit_length(self, unit: Any) -> int:
+    def unit_length(self, unit: int) -> int:
         """
         Return the unit length for sizing and chunk limits.
 
@@ -258,43 +276,8 @@ class TokenChunker(BaseDocumentChunker):
         """
         return 1
 
-    def _merge_tokens_greedy(self, tokens: List[Any]) -> List[List[Any]]:
-        """
-        Merge tokens greedily to create chunks within token limit.
 
-        Args:
-            tokens: List of tokens to merge
-
-        Returns:
-            List of chunks
-        """
-        if not tokens:
-            return []
-
-        chunks: List[List[str]] = []
-        overlap_units = self.overlap
-        start = 0
-        tokens_count = len(tokens)
-
-        while start < tokens_count:
-            end = min(start + self.chunk_size, tokens_count)
-            chunk_tokens = tokens[start:end]
-            if not chunk_tokens:
-                break
-            chunks.append(chunk_tokens)
-
-            if end >= tokens_count:
-                break
-
-            if overlap_units > 0:
-                start = max(start + 1, end - overlap_units)
-            else:
-                start = end
-
-        return chunks
-
-
-class OpenAITokenChunker(BaseDocumentChunker):
+class OpenAITokenChunker(TokenChunker):
     """Token chunker using OpenAI's tiktoken encodings."""
 
     def __init__(
@@ -302,6 +285,8 @@ class OpenAITokenChunker(BaseDocumentChunker):
         encoding_name: str = "cl100k_base",
         chunk_size: int = 1000,
         overlap: int = 0,
+        allowed_special: Optional[Union[Literal["all"], AbstractSet[str]]] = None,
+        disallowed_special: Optional[Union[Literal["all"], Collection[str]]] = None,
     ):
         """
         Initialize the OpenAI token chunker.
@@ -310,6 +295,8 @@ class OpenAITokenChunker(BaseDocumentChunker):
             encoding_name: tiktoken encoding name to use
             chunk_size: Maximum size of each chunk in tokens
             overlap: Overlap between chunks in tokens
+            allowed_special: Allowed special tokens
+            disallowed_special: Disallowed special tokens
         """
         super().__init__(chunk_size=chunk_size, overlap=overlap)
         try:
@@ -322,23 +309,28 @@ class OpenAITokenChunker(BaseDocumentChunker):
 
         self.encoding_name = encoding_name
         self._encoding = tiktoken.get_encoding(encoding_name)
+        self.allowed_special = allowed_special
+        self.disallowed_special = disallowed_special
 
-    def create_chunks(self, text: str) -> List[List[Any]]:
-        """Split text into optimally-sized token chunks."""
-        units = self._split_to_units(text)
-        return self._merge_units_greedy(units, self.chunk_size)
+    def _split_to_units(self, text: str) -> List[int]:
+        """Split text into token IDs using tiktoken."""
+        # Only pass special token arguments if they are explicitly set to non-None values
+        kwargs: dict[str, Any] = {}
+        if self.allowed_special is not None:
+            kwargs["allowed_special"] = self.allowed_special
+        if self.disallowed_special is not None:
+            kwargs["disallowed_special"] = self.disallowed_special
 
-    def _split_to_units(self, text: str) -> List[str]:
-        """Split text into token strings using tiktoken."""
-        token_ids: List[int] = self._encoding.encode(text)
-        return [self._encoding.decode([token_id]) for token_id in token_ids]
+        return self._encoding.encode(text, **kwargs)
 
-    def unit_length(self, unit: Any) -> int:
-        """Treat each token unit as length 1."""
-        return 1
+    def render_units(self, units: Sequence[Any]) -> str:
+        """Render token units by decoding them as a sequence."""
+        if all(isinstance(unit, int) for unit in units):
+            return str(self._encoding.decode(list(units)))
+        return str(super().render_units(units))
 
 
-class HuggingFaceTokenChunker(BaseDocumentChunker):
+class HuggingFaceTokenChunker(TokenChunker):
     """Token chunker using Hugging Face tokenizers."""
 
     def __init__(
@@ -367,19 +359,12 @@ class HuggingFaceTokenChunker(BaseDocumentChunker):
         self.model_name = model_name
         self._tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    def create_chunks(self, text: str) -> List[List[Any]]:
-        """Split text into optimally-sized token chunks."""
-        units = self._split_to_units(text)
-        return self._merge_units_greedy(units, self.chunk_size)
+    def _split_to_units(self, text: str) -> List[int]:
+        """Split text into token IDs using a Hugging Face tokenizer."""
+        return list(self._tokenizer.encode(text, add_special_tokens=False))
 
-    def _split_to_units(self, text: str) -> List[str]:
-        """Split text into token strings using a Hugging Face tokenizer."""
-        token_ids = self._tokenizer.encode(text, add_special_tokens=False)
-        return [
-            str(self._tokenizer.decode([token_id], clean_up_tokenization_spaces=False))
-            for token_id in token_ids
-        ]
-
-    def unit_length(self, unit: Any) -> int:
-        """Treat each token unit as length 1."""
-        return 1
+    def render_units(self, units: Sequence[Any]) -> str:
+        """Render token units by decoding them as a sequence."""
+        if all(isinstance(unit, int) for unit in units):
+            return str(self._tokenizer.decode(list(units), clean_up_tokenization_spaces=False))
+        return str(super().render_units(units))
