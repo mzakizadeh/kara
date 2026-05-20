@@ -144,6 +144,8 @@ class TestKARADataDriven:
                         max(len(prev_chunk.splits) - 1, 0),
                         len(next_chunk.splits),
                     )
+                    if overlap_count == 0:
+                        continue
                     assert (
                         prev_chunk.splits[-overlap_count:] == next_chunk.splits[:overlap_count]
                     ), f"Scenario {scenario_name}: Expected {overlap_count} overlap units"

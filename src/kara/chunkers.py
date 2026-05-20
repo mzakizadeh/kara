@@ -249,6 +249,15 @@ class TokenChunker(BaseDocumentChunker):
         """Split text into token units."""
         return self.tokenizer_function(text)
 
+    def unit_length(self, unit: Any) -> int:
+        """
+        Return the unit length for sizing and chunk limits.
+
+        For token-based chunking, each token counts as 1 unit,
+        regardless of its representation (e.g., string length).
+        """
+        return 1
+
     def _merge_tokens_greedy(self, tokens: List[Any]) -> List[List[Any]]:
         """
         Merge tokens greedily to create chunks within token limit.
