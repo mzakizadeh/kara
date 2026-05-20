@@ -376,7 +376,7 @@ class HuggingFaceTokenChunker(BaseDocumentChunker):
         """Split text into token strings using a Hugging Face tokenizer."""
         token_ids = self._tokenizer.encode(text, add_special_tokens=False)
         return [
-            self._tokenizer.decode([token_id], clean_up_tokenization_spaces=False)
+            str(self._tokenizer.decode([token_id], clean_up_tokenization_spaces=False))
             for token_id in token_ids
         ]
 
