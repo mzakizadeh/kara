@@ -23,8 +23,8 @@
         "keep_separator": true
     },
     "expected_results": {
-        "min_reused_chunks": 0,
-        "efficiency_ratio_threshold": 0.0,
+        "reused_chunks": 1,
+        "efficiency_ratio": 0.091,
         "documents_unchanged": [],
         "documents_changed": [
             0,

@@ -86,7 +86,7 @@ class BaseDocumentChunker(ABC):
         units_count = len(units)
 
         while start < units_count:
-            current_chunk: List[str] = []
+            current_chunk: List[Any] = []
             current_length = 0
             end = start
 
@@ -330,7 +330,7 @@ class OpenAITokenChunker(BaseDocumentChunker):
 
     def _split_to_units(self, text: str) -> List[str]:
         """Split text into token strings using tiktoken."""
-        token_ids = self._encoding.encode(text)
+        token_ids: List[int] = self._encoding.encode(text)
         return [self._encoding.decode([token_id]) for token_id in token_ids]
 
     def unit_length(self, unit: Any) -> int:
@@ -376,7 +376,7 @@ class HuggingFaceTokenChunker(BaseDocumentChunker):
         """Split text into token strings using a Hugging Face tokenizer."""
         token_ids = self._tokenizer.encode(text, add_special_tokens=False)
         return [
-            self._tokenizer.decode([token_id], clean_up_tokenization_spaces=False)
+            str(self._tokenizer.decode([token_id], clean_up_tokenization_spaces=False))
             for token_id in token_ids
         ]
 
