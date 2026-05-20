@@ -328,9 +328,9 @@ class OpenAITokenChunker(BaseDocumentChunker):
         units = self._split_to_units(text)
         return self._merge_units_greedy(units, self.chunk_size)
 
-    def _split_to_units(self, text: str) -> List[str]:
+    def _split_to_units(self, text: str) -> List[int]:
         """Split text into token strings using tiktoken."""
-        token_ids = self._encoding.encode(text)
+        token_ids: List[int] = self._encoding.encode(text)
         return [self._encoding.decode([token_id]) for token_id in token_ids]
 
     def unit_length(self, unit: Any) -> int:
