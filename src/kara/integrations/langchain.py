@@ -64,8 +64,8 @@ class KARATextSplitter(TextSplitter):
         cls,
         encoding_name: str = "cl100k_base",
         model_name: Optional[str] = None,
-        allowed_special: Union[Literal["all"], AbstractSet[str]] = set(),
-        disallowed_special: Union[Literal["all"], Collection[str]] = "all",
+        allowed_special: Union[Literal["all"], AbstractSet[str], None] = None,
+        disallowed_special: Union[Literal["all"], Collection[str], None] = None,
         **kwargs: Any,
     ) -> "KARATextSplitter":
         """
@@ -91,6 +91,8 @@ class KARATextSplitter(TextSplitter):
             encoding_name=encoding_name,
             chunk_size=chunk_size,
             overlap=chunk_overlap,
+            allowed_special=allowed_special,
+            disallowed_special=disallowed_special,
         )
         return cls(
             chunker=chunker,

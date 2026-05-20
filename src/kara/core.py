@@ -8,33 +8,35 @@ import json
 import sys
 import warnings
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, Generic, List, Optional, Sequence, Set, Tuple, TypeVar
 
 from .chunkers import BaseDocumentChunker
 
+T = TypeVar("T")
+
 
 @dataclass
-class ChunkData:
+class ChunkData(Generic[T]):
     """Represents a chunk with its content and metadata."""
 
     content: Any
-    splits: List[Any]
+    splits: List[T]
     hash: str
     document_id: Optional[int] = None
 
     @classmethod
     def from_splits(
         cls,
-        splits: Sequence[Any],
+        splits: Sequence[T],
         document_id: Optional[int] = None,
-        serializer: Optional[Callable[[Sequence[Any]], bytes]] = None,
-        renderer: Optional[Callable[[Sequence[Any]], Any]] = None,
-    ) -> "ChunkData":
+        serializer: Optional[Callable[[Sequence[T]], bytes]] = None,
+        renderer: Optional[Callable[[Sequence[T]], Any]] = None,
+    ) -> "ChunkData[T]":
         """Create ChunkData from splits."""
         content: Any
         if renderer is None:
             if all(isinstance(unit, str) for unit in splits):
-                content = "".join(splits)
+                content = "".join(splits)  # type: ignore
             else:
                 content = list(splits)
         else:
@@ -42,7 +44,7 @@ class ChunkData:
 
         if serializer is None:
             if all(isinstance(unit, str) for unit in splits):
-                serialized = "".join(splits).encode("utf-8")
+                serialized = "".join(splits).encode("utf-8")  # type: ignore
             else:
                 serialized = json.dumps(
                     list(splits), separators=(",", ":"), ensure_ascii=True
@@ -55,16 +57,16 @@ class ChunkData:
 
 
 @dataclass
-class ChunkedDocument:
+class ChunkedDocument(Generic[T]):
     """Represents the current state of the knowledge base."""
 
-    chunks: List[ChunkData]
+    chunks: List[ChunkData[T]]
 
     def get_chunk_hashes(self) -> Set[str]:
         """Get all chunk hashes in the knowledge base."""
         return {chunk.hash for chunk in self.chunks}
 
-    def get_chunks_by_document(self, document_id: int) -> List[ChunkData]:
+    def get_chunks_by_document(self, document_id: int) -> List[ChunkData[T]]:
         """Get all chunks belonging to a specific document."""
         return [chunk for chunk in self.chunks if chunk.document_id == document_id]
 
@@ -78,8 +80,8 @@ class ChunkedDocument:
 
     @classmethod
     def from_chunks(
-        cls, chunks: List[Any], chunker: BaseDocumentChunker, document_id: Optional[int] = None
-    ) -> "ChunkedDocument":
+        cls, chunks: List[Any], chunker: BaseDocumentChunker[T], document_id: Optional[int] = None
+    ) -> "ChunkedDocument[T]":
         """Create a :class:`ChunkedDocument` from pre-split chunks.
 
         Args:
@@ -117,15 +119,15 @@ class ChunkedDocument:
 
 
 @dataclass
-class UpdateResult:
+class UpdateResult(Generic[T]):
     """Result of a KARA update operation."""
 
     num_added: int = 0
     num_reused: int = 0
     num_deleted: int = 0
-    new_chunked_doc: Optional["ChunkedDocument"] = None
+    new_chunked_doc: Optional["ChunkedDocument[T]"] = None
 
-    def __add__(self, other: "UpdateResult") -> "UpdateResult":
+    def __add__(self, other: "UpdateResult[T]") -> "UpdateResult[T]":
         """Add two UpdateResult objects."""
         return UpdateResult(
             num_added=self.num_added + other.num_added,
@@ -145,7 +147,7 @@ class UpdateResult:
         return self.num_reused / total_chunks if total_chunks > 0 else 0.0
 
 
-class KARAUpdater:
+class KARAUpdater(Generic[T]):
     """
     Knowledge-Aware Re-embedding Algorithm updater.
 
@@ -155,7 +157,7 @@ class KARAUpdater:
 
     def __init__(
         self,
-        chunker: BaseDocumentChunker,
+        chunker: BaseDocumentChunker[T],
     ):
         """
         Initialize the KARA updater.
@@ -163,10 +165,10 @@ class KARAUpdater:
         Args:
             chunker: Document chunker for breaking documents into optimal chunks
         """
-        self.chunker: BaseDocumentChunker = chunker
+        self.chunker: BaseDocumentChunker[T] = chunker
         self.max_chunk_size: int = chunker.chunk_size
 
-    def create_knowledge_base(self, documents: List[str]) -> UpdateResult:
+    def create_knowledge_base(self, documents: List[str]) -> UpdateResult[T]:
         """
         Create a new knowledge base from documents.
 
@@ -179,7 +181,7 @@ class KARAUpdater:
         if not documents:
             return UpdateResult(
                 num_added=0,
-                new_chunked_doc=ChunkedDocument(chunks=[]),
+                new_chunked_doc=ChunkedDocument[T](chunks=[]),
             )
 
         all_chunks = []
@@ -202,12 +204,12 @@ class KARAUpdater:
 
         return UpdateResult(
             num_added=total_added,
-            new_chunked_doc=ChunkedDocument(chunks=all_chunks),
+            new_chunked_doc=ChunkedDocument[T](chunks=all_chunks),
         )
 
     def update_knowledge_base(
-        self, current_kb: ChunkedDocument, documents: List[str]
-    ) -> UpdateResult:
+        self, current_kb: ChunkedDocument[T], documents: List[str]
+    ) -> UpdateResult[T]:
         """
         Update the knowledge base with new documents.
 
@@ -225,8 +227,8 @@ class KARAUpdater:
             )
 
         # Process each document separately and combine results
-        all_new_chunks: List[ChunkData] = []
-        combined_result = UpdateResult()
+        all_new_chunks: List[ChunkData[T]] = []
+        combined_result: UpdateResult[T] = UpdateResult()
         old_chunk_counts: Dict[str, int] = {}
         for chunk in current_kb.chunks:
             old_chunk_counts[chunk.hash] = old_chunk_counts.get(chunk.hash, 0) + 1
@@ -241,13 +243,19 @@ class KARAUpdater:
 
             assert doc_result.new_chunked_doc is not None
             all_new_chunks.extend(doc_result.new_chunked_doc.chunks)
-            combined_result.num_added += doc_result.num_added
-            combined_result.num_reused += doc_result.num_reused
 
             # Track which hashes are used across all documents
             for chunk in doc_result.new_chunked_doc.chunks:
-                if chunk.hash in old_chunk_counts:
-                    used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+                used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+
+        # Calculate added and reused chunks based on inventory
+        combined_result.num_added = 0
+        combined_result.num_reused = 0
+        for chunk_hash, count in used_counts.items():
+            old_count = old_chunk_counts.get(chunk_hash, 0)
+            reused = min(count, old_count)
+            combined_result.num_reused += reused
+            combined_result.num_added += count - reused
 
         # Count deleted chunks considering duplicate hashes
         for chunk_hash, count in old_chunk_counts.items():
@@ -256,17 +264,17 @@ class KARAUpdater:
                 combined_result.num_deleted += count - reused_count
 
         # Create the final chunked document
-        combined_result.new_chunked_doc = ChunkedDocument(chunks=all_new_chunks)
+        combined_result.new_chunked_doc = ChunkedDocument[T](chunks=all_new_chunks)
 
         return combined_result
 
     def _update_chunks_for_document(
         self,
-        current_kb: ChunkedDocument,
-        new_splits: List[Any],
+        current_kb: ChunkedDocument[T],
+        new_splits: List[T],
         document_id: int,
         old_chunk_hashes: Set[str],
-    ) -> UpdateResult:
+    ) -> UpdateResult[T]:
         """
         Update chunks for a single document using the KARA algorithm.
 
@@ -283,11 +291,11 @@ class KARAUpdater:
         if N == 0:
             return UpdateResult(
                 num_deleted=0,  # Will be calculated at the end
-                new_chunked_doc=ChunkedDocument(chunks=[]),
+                new_chunked_doc=ChunkedDocument[T](chunks=[]),
             )
 
         # Build graph of possible chunks for this document
-        edges: List[List[Tuple[int, float, List[Any], str]]] = [[] for _ in range(N + 1)]
+        edges: List[List[Tuple[int, float, List[T], str]]] = [[] for _ in range(N + 1)]
 
         max_chunk_size = self.max_chunk_size
         max_chunk_size_float = float(max_chunk_size)
@@ -296,7 +304,7 @@ class KARAUpdater:
 
         for i in range(N):
             current_length = 0
-            chunk_splits = []
+            chunk_splits: List[T] = []
 
             for j in range(i + 1, N + 1):
                 if j <= N:
@@ -341,7 +349,7 @@ class KARAUpdater:
         min_cost[0] = 0
         min_num_edges[0] = 0
         previous_node: List[Optional[int]] = [None] * (N + 1)
-        previous_edge: List[Optional[Tuple[int, float, List[Any], str]]] = [None] * (N + 1)
+        previous_edge: List[Optional[Tuple[int, float, List[T], str]]] = [None] * (N + 1)
 
         heap: List[Tuple[float, int, int]] = [(0, 0, 0)]  # (cost, edge_count, node)
 
@@ -365,8 +373,8 @@ class KARAUpdater:
                     heapq.heappush(heap, heap_item)
 
         # Reconstruct the solution for this document
-        new_chunks: List[ChunkData] = []
-        result = UpdateResult()
+        new_chunks: List[ChunkData[T]] = []
+        result: UpdateResult[T] = UpdateResult()
 
         node = N
         while node > 0:
@@ -383,17 +391,12 @@ class KARAUpdater:
             )
             new_chunks.insert(0, chunk_data)
 
-            if chunk_hash in old_chunk_hashes:
-                result.num_reused += 1
-            else:
-                result.num_added += 1
-
             prev_node = previous_node[node]
             if prev_node is None:
                 break
             node = prev_node
 
-        result.new_chunked_doc = ChunkedDocument(chunks=new_chunks)
+        result.new_chunked_doc = ChunkedDocument[T](chunks=new_chunks)
         return result
 
     def _update_chunks(self, current_kb: ChunkedDocument, new_splits: List[Any]) -> UpdateResult:
@@ -417,14 +420,23 @@ class KARAUpdater:
             current_kb, new_splits, 0, set(old_chunk_counts.keys())
         )
 
-        # Count deleted chunks that are not reused
+        # Count used chunks
         used_counts: Dict[str, int] = {}
         assert doc_result.new_chunked_doc is not None
         for chunk in doc_result.new_chunked_doc.chunks:
-            if chunk.hash in old_chunk_counts:
-                used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+            used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
+
+        # Calculate added and reused chunks based on inventory
+        doc_result.num_added = 0
+        doc_result.num_reused = 0
+        for chunk_hash, count in used_counts.items():
+            old_count = old_chunk_counts.get(chunk_hash, 0)
+            reused = min(count, old_count)
+            doc_result.num_reused += reused
+            doc_result.num_added += count - reused
 
         # Count deleted chunks
+        doc_result.num_deleted = 0
         for chunk_hash, count in old_chunk_counts.items():
             reused_count = used_counts.get(chunk_hash, 0)
             if reused_count < count:
