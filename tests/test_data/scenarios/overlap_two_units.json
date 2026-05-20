@@ -13,6 +13,8 @@
         "keep_separator": true
     },
     "expected_results": {
+        "reused_chunks": 6,
+        "efficiency_ratio": 1.0,
         "total_chunks": 6,
         "overlap_units": 2
     },

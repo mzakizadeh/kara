@@ -14,8 +14,8 @@
         "keep_separator": true
     },
     "expected_results": {
-        "min_reused_chunks": 0,
-        "efficiency_ratio_threshold": 0.0,
+        "reused_chunks": 1,
+        "efficiency_ratio": 0.06666666666666667,
         "new_chunks_expected": true,
         "total_chunks": 15
     },

@@ -86,7 +86,7 @@ class BaseDocumentChunker(ABC):
         units_count = len(units)
 
         while start < units_count:
-            current_chunk: List[str] = []
+            current_chunk: List[Any] = []
             current_length = 0
             end = start
 

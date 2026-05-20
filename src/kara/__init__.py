@@ -28,8 +28,6 @@ __all__ = [
     "UpdateResult",
     "BaseDocumentChunker",
     "CharacterChunker",
-    "SimpleCharacterChunker",
-    "FixedSizeCharacterChunker",
     "TokenChunker",
     "OpenAITokenChunker",
     "HuggingFaceTokenChunker",
