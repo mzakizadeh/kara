@@ -13,5 +13,9 @@
         ".ruff_cache/": true,
         ".coverage/": true,
         "__pycache__/": true,
-    }
+    },
+    "cSpell.words": [
+        "Chunker",
+        "chunkers"
+    ]
 }
