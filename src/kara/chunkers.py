@@ -5,7 +5,7 @@ Document chunkers for breaking documents into optimal chunks.
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Optional, Sequence, Union
+from typing import AbstractSet, Any, Callable, Collection, List, Literal, Optional, Sequence, Union
 
 
 class BaseDocumentChunker(ABC):
@@ -302,6 +302,8 @@ class OpenAITokenChunker(BaseDocumentChunker):
         encoding_name: str = "cl100k_base",
         chunk_size: int = 1000,
         overlap: int = 0,
+        allowed_special: Optional[Union[Literal["all"], AbstractSet[str]]] = None,
+        disallowed_special: Optional[Union[Literal["all"], Collection[str]]] = None,
     ):
         """
         Initialize the OpenAI token chunker.
@@ -310,6 +312,8 @@ class OpenAITokenChunker(BaseDocumentChunker):
             encoding_name: tiktoken encoding name to use
             chunk_size: Maximum size of each chunk in tokens
             overlap: Overlap between chunks in tokens
+            allowed_special: Allowed special tokens
+            disallowed_special: Disallowed special tokens
         """
         super().__init__(chunk_size=chunk_size, overlap=overlap)
         try:
@@ -322,6 +326,8 @@ class OpenAITokenChunker(BaseDocumentChunker):
 
         self.encoding_name = encoding_name
         self._encoding = tiktoken.get_encoding(encoding_name)
+        self.allowed_special = allowed_special
+        self.disallowed_special = disallowed_special
 
     def create_chunks(self, text: str) -> List[List[Any]]:
         """Split text into optimally-sized token chunks."""
@@ -330,7 +336,14 @@ class OpenAITokenChunker(BaseDocumentChunker):
 
     def _split_to_units(self, text: str) -> List[str]:
         """Split text into token strings using tiktoken."""
-        token_ids: List[int] = self._encoding.encode(text)
+        # Only pass special token arguments if they are explicitly set to non-None values
+        kwargs: dict[str, Any] = {}
+        if self.allowed_special is not None:
+            kwargs["allowed_special"] = self.allowed_special
+        if self.disallowed_special is not None:
+            kwargs["disallowed_special"] = self.disallowed_special
+
+        token_ids: List[int] = self._encoding.encode(text, **kwargs)
         return [self._encoding.decode([token_id]) for token_id in token_ids]
 
     def unit_length(self, unit: Any) -> int:
