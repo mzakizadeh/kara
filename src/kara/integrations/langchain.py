@@ -83,7 +83,7 @@ class KARATextSplitter(TextSplitter):
         """
         from ..chunkers import OpenAITokenChunker
 
-        chunk_size = kwargs.pop("chunk_size", 512)
+        chunk_size = kwargs.pop("chunk_size", 1000)
         chunk_overlap = kwargs.pop("chunk_overlap", 0)
         previous_chunks = kwargs.pop("previous_chunks", None)
 
@@ -116,7 +116,7 @@ class KARATextSplitter(TextSplitter):
         """
         from ..chunkers import HuggingFaceTokenChunker
 
-        chunk_size = kwargs.pop("chunk_size", 512)
+        chunk_size = kwargs.pop("chunk_size", 1000)
         chunk_overlap = kwargs.pop("chunk_overlap", 0)
         previous_chunks = kwargs.pop("previous_chunks", None)
 
