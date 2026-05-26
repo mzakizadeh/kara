@@ -100,8 +100,8 @@ def test_kara_text_splitter_previous_chunks() -> None:
     with pytest.warns(UserWarning, match="If the separator list is not the same"):
         splitter = KARATextSplitter(chunker=chunker, previous_chunks=previous_chunks)
 
-    assert splitter._current_knowledge_base is not None
-    assert len(splitter._current_knowledge_base.chunks) == 2
+    assert splitter._current_collection is not None
+    assert len(splitter._current_collection.chunks) == 2
 
     # New text
     text = "Chunk 1 and some new content"

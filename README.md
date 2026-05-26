@@ -1,4 +1,4 @@
-# KARA - Efficient RAG Knowledge Base Updates
+# KARA - Efficient RAG Document Collection Updates
 
 [![CI](https://github.com/mzakizadeh/kara/workflows/CI/badge.svg)](https://github.com/mzakizadeh/kara/actions)
 [![PyPI version](https://badge.fury.io/py/kara-toolkit.svg)](https://badge.fury.io/py/kara-toolkit)
@@ -8,7 +8,7 @@
 
 > **KARA** stands for **Knowledge-Aware Reembedding Algorithm**. The word "Kara" (کارآ) also means "efficient" in Persian.
 
-KARA is a Python library that efficiently updates knowledge bases by reducing unnecessary embedding operations. When documents change, KARA automatically identifies and reuses existing chunks, minimizing the need for new embeddings.
+KARA is a Python library that efficiently updates document collections by reducing unnecessary embedding operations. When documents change, KARA automatically identifies and reuses existing chunks, minimizing the need for new embeddings.
 
 ## Installation
 
@@ -47,10 +47,10 @@ chunker = OpenAITokenChunker(encoding_name="cl100k_base", chunk_size=512)
 updater = KARAUpdater(chunker=chunker)
 
 # Process initial documents
-result = updater.create_knowledge_base(["Your long document text..."])
+result = updater.create_collection(["Your long document text..."])
 
 # Update with modified content - reuses existing token chunks automatically
-update_result = updater.update_knowledge_base(
+update_result = updater.update_collection(
     result.new_chunked_doc,
     ["Your updated document text..."]
 )
@@ -108,9 +108,9 @@ Typical efficiency gains: 70-90% fewer embedding operations for document updates
 
 ## Limitations
 
-While KARA provides significant efficiency improvements for knowledge base updates, there are some current limitations to be aware of:
+While KARA provides significant efficiency improvements for document collection updates, there are some current limitations to be aware of:
 
-- **Document Version Dependency**: You need to keep the last version of documents to identify reusable chunks. However, you may be able to reconstruct document content using saved chunks in your vector store to reduce storage overhead. When compared to LangChain's indexing solution ([documented here](https://python.langchain.com/docs/how_to/indexing/)), which maintains a separate SQL database for chunk hashes while being extremely inefficient, our approach is still superior.
+- **Document Version Dependency**: You need to keep the last version of documents to identify reusable chunks. However, you may be able to reconstruct document content using saved chunks in your vector store to reduce storage overhead. When compared to LangChain's indexing solution ([documented here](https://www.langchain.com/blog/syncing-data-sources-to-vector-stores)), which maintains a separate SQL database for chunk hashes while being extremely inefficient, our approach is still superior.
 
 - **Chunking Configuration Changes**: Changing splitting configurations (chunk size, separators) between updates may disrupt the algorithm's ability to reuse chunks effectively.
 
