@@ -223,7 +223,7 @@ class KARAUpdater(Generic[T]):
         if not documents:
             return UpdateResult(
                 num_deleted=len(current_collection.chunks),
-                new_chunked_doc=ChunkedDocument(chunks=[]),
+                new_chunked_doc=ChunkedDocument[T](chunks=[]),
             )
 
         # Process each document separately and combine results
@@ -400,8 +400,8 @@ class KARAUpdater(Generic[T]):
         return result
 
     def _update_chunks(
-        self, current_collection: ChunkedDocument, new_splits: List[Any]
-    ) -> UpdateResult:
+        self, current_collection: ChunkedDocument[Any], new_splits: List[Any]
+    ) -> UpdateResult[Any]:
         """
         Update chunks using the KARA algorithm for backward compatibility.
         This method handles single document updates.

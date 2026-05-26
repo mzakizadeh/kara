@@ -155,7 +155,7 @@ class KARATextSplitter(TextSplitter):
         Returns:
             List of text chunks
         """
-        if not self._current_collection:
+        if self._current_collection is None:
             # First time - initialize
             self._last_result = self.kara_updater.create_collection([text])
             self._current_collection = self._last_result.new_chunked_doc

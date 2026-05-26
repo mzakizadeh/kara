@@ -83,7 +83,9 @@ class TestKARADataDriven:
             assert initial_collection is not None
 
             # Update with new documents
-            update_result = updater.update_collection(initial_collection, scenario.updated_documents)
+            update_result = updater.update_collection(
+                initial_collection, scenario.updated_documents
+            )
             assert update_result.new_chunked_doc is not None
 
             # Validate expected results
