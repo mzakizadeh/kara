@@ -5,7 +5,7 @@ Test data loading and managing KARA test scenarios.
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 
 @dataclass
@@ -15,27 +15,27 @@ class Scenario:
     name: str
     description: str
     test_type: str
-    parameters: Dict[str, Any]
-    tags: List[str]
+    parameters: dict[str, Any]
+    tags: list[str]
 
     # Single document fields
     initial_text: Optional[str] = None
     updated_text: Optional[str] = None
 
     # Multi-document fields
-    initial_documents: Optional[List[str]] = None
-    updated_documents: Optional[List[str]] = None
+    initial_documents: Optional[list[str]] = None
+    updated_documents: Optional[list[str]] = None
 
     # Exception handling fields
     expect_failure: bool = False
-    expected_results: Optional[Dict[str, Any]] = None
+    expected_results: Optional[dict[str, Any]] = None
     expected_exception: Optional[str] = None
     expected_exception_message: Optional[str] = None
     exception_on_create: bool = False
     exception_on_update: bool = False
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> "Scenario":
+    def from_json(cls, data: dict[str, Any]) -> "Scenario":
         """Create Scenario from JSON data."""
         return cls(
             name=data["name"],
@@ -90,9 +90,9 @@ class DataLoader:
 
         return Scenario.from_json(data)
 
-    def load_all_scenarios(self) -> List[Scenario]:
+    def load_all_scenarios(self) -> list[Scenario]:
         """Load all available test scenarios."""
-        scenarios: List[Scenario] = []
+        scenarios: list[Scenario] = []
 
         if not self.scenarios_dir.exists():
             return scenarios
@@ -104,24 +104,24 @@ class DataLoader:
 
         return scenarios
 
-    def load_scenarios_by_tag(self, tag: str) -> List[Scenario]:
+    def load_scenarios_by_tag(self, tag: str) -> list[Scenario]:
         """Load scenarios that have a specific tag."""
         all_scenarios = self.load_all_scenarios()
         return [scenario for scenario in all_scenarios if tag in scenario.tags]
 
-    def load_scenarios_by_type(self, test_type: str) -> List[Scenario]:
+    def load_scenarios_by_type(self, test_type: str) -> list[Scenario]:
         """Load scenarios of a specific test type."""
         all_scenarios = self.load_all_scenarios()
         return [scenario for scenario in all_scenarios if scenario.test_type == test_type]
 
-    def list_available_scenarios(self) -> List[str]:
+    def list_available_scenarios(self) -> list[str]:
         """List names of all available scenarios."""
         if not self.scenarios_dir.exists():
             return []
 
         return [f.stem for f in self.scenarios_dir.glob("*.json")]
 
-    def list_available_tags(self) -> List[str]:
+    def list_available_tags(self) -> list[str]:
         """List all unique tags from available scenarios."""
         all_scenarios = self.load_all_scenarios()
         all_tags = set()
@@ -129,7 +129,7 @@ class DataLoader:
             all_tags.update(scenario.tags)
         return sorted(all_tags)
 
-    def list_available_types(self) -> List[str]:
+    def list_available_types(self) -> list[str]:
         """List all unique test types from available scenarios."""
         all_scenarios = self.load_all_scenarios()
         return sorted({scenario.test_type for scenario in all_scenarios})
