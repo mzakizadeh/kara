@@ -52,10 +52,10 @@ class KARATextSplitter(TextSplitter):
             chunker=self._kara_chunker,
         )
 
-        # Store current knowledge base
-        self._current_knowledge_base: Optional[ChunkedDocument] = None
+        # Store current document collection
+        self._current_collection: Optional[ChunkedDocument] = None
         if previous_chunks is not None:
-            self._current_knowledge_base = ChunkedDocument.from_chunks(
+            self._current_collection = ChunkedDocument.from_chunks(
                 previous_chunks, self._kara_chunker
             )
 
@@ -155,19 +155,19 @@ class KARATextSplitter(TextSplitter):
         Returns:
             List of text chunks
         """
-        if not self._current_knowledge_base:
+        if not self._current_collection:
             # First time - initialize
-            self._last_result = self.kara_updater.create_knowledge_base([text])
-            self._current_knowledge_base = self._last_result.new_chunked_doc
+            self._last_result = self.kara_updater.create_collection([text])
+            self._current_collection = self._last_result.new_chunked_doc
         else:
             # Update existing splits
-            self._last_result = self.kara_updater.update_knowledge_base(
-                self._current_knowledge_base, [text]
+            self._last_result = self.kara_updater.update_collection(
+                self._current_collection, [text]
             )
-            self._current_knowledge_base = self._last_result.new_chunked_doc
+            self._current_collection = self._last_result.new_chunked_doc
 
-        # Type guard to ensure we have a valid knowledge base
-        if self._current_knowledge_base is None:
+        # Type guard to ensure we have a valid collection
+        if self._current_collection is None:
             return []
 
-        return self._current_knowledge_base.get_chunk_contents()
+        return self._current_collection.get_chunk_contents()

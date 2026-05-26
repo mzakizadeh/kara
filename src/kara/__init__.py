@@ -1,7 +1,7 @@
 """
 kara-toolkit - Knowledge-Aware Re-embedding Algorithm
 
-A Python library for efficient updates to RAG knowledge bases,
+A Python library for efficient updates to RAG document collections,
 minimizing embedding operations through intelligent chunk reuse.
 """
 
