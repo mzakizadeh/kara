@@ -140,6 +140,3 @@ example_cache.db
 *.temp
 temp/
 tmp/
-
-# Package manager
-.pdm-python
