@@ -4,7 +4,6 @@ These tests focus on testing individual classes and methods in isolation.
 For integration testing and scenario-based testing, see test_data_driven.py.
 """
 
-from typing import List
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -125,7 +124,7 @@ class TestTokenChunker:
     def test_basic_token_chunking(self) -> None:
         """Test that token-based chunking respects the chunk_size."""
 
-        def mock_tokenizer(text: str) -> List[int]:
+        def mock_tokenizer(text: str) -> list[int]:
             return [ord(c) for c in text.replace(" ", "")]
 
         # text has 7 words, but mock_tokenizer returns length of text without spaces
@@ -141,7 +140,7 @@ class TestTokenChunker:
     def test_exact_multiple_of_chunk_size(self) -> None:
         """Tokens equal to a multiple of chunk_size should divide evenly."""
 
-        def mock_tokenizer(text: str) -> List[int]:
+        def mock_tokenizer(text: str) -> list[int]:
             return [1] * len(text.split())
 
         text = "tok1 tok2 tok3 tok4 tok5 tok6"
@@ -155,7 +154,7 @@ class TestTokenChunker:
     def test_empty_text(self) -> None:
         """Test that empty input returns no chunks."""
 
-        def mock_tokenizer(text: str) -> List[int]:
+        def mock_tokenizer(text: str) -> list[int]:
             return []
 
         chunker = TokenChunker(tokenizer_function=mock_tokenizer, chunk_size=2)

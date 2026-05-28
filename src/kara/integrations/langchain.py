@@ -2,7 +2,9 @@
 LangChain integration for kara-toolkit.
 """
 
-from typing import AbstractSet, Any, Collection, List, Literal, Optional, Union
+from collections.abc import Collection
+from collections.abc import Set as AbstractSet
+from typing import Any, Literal, Optional, Union
 
 try:
     from langchain_text_splitters.base import TextSplitter
@@ -27,7 +29,7 @@ class KARATextSplitter(TextSplitter):
     def __init__(
         self,
         chunker: BaseDocumentChunker,
-        previous_chunks: Optional[List[str]] = None,
+        previous_chunks: Optional[list[str]] = None,
         **kwargs: Any,
     ):
         """
@@ -52,10 +54,10 @@ class KARATextSplitter(TextSplitter):
             chunker=self._kara_chunker,
         )
 
-        # Store current knowledge base
-        self._current_knowledge_base: Optional[ChunkedDocument] = None
+        # Store current document collection
+        self._current_collection: Optional[ChunkedDocument] = None
         if previous_chunks is not None:
-            self._current_knowledge_base = ChunkedDocument.from_chunks(
+            self._current_collection = ChunkedDocument.from_chunks(
                 previous_chunks, self._kara_chunker
             )
 
@@ -64,8 +66,8 @@ class KARATextSplitter(TextSplitter):
         cls,
         encoding_name: str = "cl100k_base",
         model_name: Optional[str] = None,
-        allowed_special: Union[Literal["all"], AbstractSet[str], None] = None,
-        disallowed_special: Union[Literal["all"], Collection[str], None] = None,
+        allowed_special: Optional[Union[Literal["all"], AbstractSet[str]]] = None,
+        disallowed_special: Union[Literal["all"], Collection[str]] = "all",
         **kwargs: Any,
     ) -> "KARATextSplitter":
         """
@@ -73,7 +75,7 @@ class KARATextSplitter(TextSplitter):
 
         Args:
             encoding_name: tiktoken encoding name
-            model_name: Optional model name
+            model_name: Optional model name (restored for LangChain compatibility)
             allowed_special: Allowed special tokens
             disallowed_special: Disallowed special tokens
             **kwargs: Additional arguments passed to KARATextSplitter
@@ -103,7 +105,7 @@ class KARATextSplitter(TextSplitter):
     @classmethod
     def from_huggingface_tokenizer(
         cls,
-        tokenizer: Any = None,
+        tokenizer: Any,
         **kwargs: Any,
     ) -> "KARATextSplitter":
         """
@@ -122,6 +124,7 @@ class KARATextSplitter(TextSplitter):
         chunk_overlap = kwargs.pop("chunk_overlap", 0)
         previous_chunks = kwargs.pop("previous_chunks", None)
 
+        # Extract model_name from tokenizer or kwargs
         model_name = kwargs.pop("model_name", None)
         if model_name is None:
             if isinstance(tokenizer, str):
@@ -145,7 +148,7 @@ class KARATextSplitter(TextSplitter):
         """Get the result of the last split operation."""
         return self._last_result
 
-    def split_text(self, text: str) -> List[str]:
+    def split_text(self, text: str) -> list[str]:
         """
         Split text using KARA algorithm.
 
@@ -155,19 +158,19 @@ class KARATextSplitter(TextSplitter):
         Returns:
             List of text chunks
         """
-        if not self._current_knowledge_base:
+        if self._current_collection is None:
             # First time - initialize
-            self._last_result = self.kara_updater.create_knowledge_base([text])
-            self._current_knowledge_base = self._last_result.new_chunked_doc
+            self._last_result = self.kara_updater.create_collection([text])
+            self._current_collection = self._last_result.new_chunked_doc
         else:
             # Update existing splits
-            self._last_result = self.kara_updater.update_knowledge_base(
-                self._current_knowledge_base, [text]
+            self._last_result = self.kara_updater.update_collection(
+                self._current_collection, [text]
             )
-            self._current_knowledge_base = self._last_result.new_chunked_doc
+            self._current_collection = self._last_result.new_chunked_doc
 
-        # Type guard to ensure we have a valid knowledge base
-        if self._current_knowledge_base is None:
+        # Type guard to ensure we have a valid collection
+        if self._current_collection is None:
             return []
 
-        return self._current_knowledge_base.get_chunk_contents()
+        return self._current_collection.get_chunk_contents()

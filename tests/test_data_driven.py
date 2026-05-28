@@ -59,15 +59,15 @@ class TestKARADataDriven:
         updater = self._create_updater_from_scenario(scenario)
 
         if scenario.is_single_document():
-            # Create initial knowledge base
+            # Create initial collection
             assert scenario.initial_text is not None
             assert scenario.updated_text is not None
-            initial_result = updater.create_knowledge_base([scenario.initial_text])
-            initial_kb = initial_result.new_chunked_doc
-            assert initial_kb is not None
+            initial_result = updater.create_collection([scenario.initial_text])
+            initial_collection = initial_result.new_chunked_doc
+            assert initial_collection is not None
 
             # Update with new text
-            update_result = updater.update_knowledge_base(initial_kb, [scenario.updated_text])
+            update_result = updater.update_collection(initial_collection, [scenario.updated_text])
             assert update_result.new_chunked_doc is not None
 
             # Validate expected results
@@ -75,15 +75,17 @@ class TestKARADataDriven:
                 self._validate_results(update_result, scenario.expected_results, scenario.name)
 
         elif scenario.is_multi_document():
-            # Create initial knowledge base
+            # Create initial collection
             assert scenario.initial_documents is not None
             assert scenario.updated_documents is not None
-            initial_result = updater.create_knowledge_base(scenario.initial_documents)
-            initial_kb = initial_result.new_chunked_doc
-            assert initial_kb is not None
+            initial_result = updater.create_collection(scenario.initial_documents)
+            initial_collection = initial_result.new_chunked_doc
+            assert initial_collection is not None
 
             # Update with new documents
-            update_result = updater.update_knowledge_base(initial_kb, scenario.updated_documents)
+            update_result = updater.update_collection(
+                initial_collection, scenario.updated_documents
+            )
             assert update_result.new_chunked_doc is not None
 
             # Validate expected results

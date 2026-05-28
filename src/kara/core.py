@@ -7,8 +7,9 @@ import heapq
 import json
 import sys
 import warnings
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Generic, List, Optional, Sequence, Set, Tuple, TypeVar
+from typing import Any, Callable, Generic, Optional, TypeVar
 
 from .chunkers import BaseDocumentChunker
 
@@ -20,7 +21,7 @@ class ChunkData(Generic[T]):
     """Represents a chunk with its content and metadata."""
 
     content: Any
-    splits: List[T]
+    splits: list[T]
     hash: str
     document_id: Optional[int] = None
 
@@ -58,34 +59,34 @@ class ChunkData(Generic[T]):
 
 @dataclass
 class ChunkedDocument(Generic[T]):
-    """Represents the current state of the knowledge base."""
+    """Represents the current state of the document collection."""
 
-    chunks: List[ChunkData[T]]
+    chunks: list[ChunkData[T]]
 
-    def get_chunk_hashes(self) -> Set[str]:
-        """Get all chunk hashes in the knowledge base."""
+    def get_chunk_hashes(self) -> set[str]:
+        """Get all chunk hashes in the collection."""
         return {chunk.hash for chunk in self.chunks}
 
-    def get_chunks_by_document(self, document_id: int) -> List[ChunkData[T]]:
+    def get_chunks_by_document(self, document_id: int) -> list[ChunkData[T]]:
         """Get all chunks belonging to a specific document."""
         return [chunk for chunk in self.chunks if chunk.document_id == document_id]
 
-    def get_document_ids(self) -> Set[int]:
-        """Get all unique document IDs in the knowledge base."""
+    def get_document_ids(self) -> set[int]:
+        """Get all unique document IDs in the collection."""
         return {chunk.document_id for chunk in self.chunks if chunk.document_id is not None}
 
-    def get_chunk_contents(self) -> List[Any]:
+    def get_chunk_contents(self) -> list[Any]:
         """Get all chunk contents."""
         return [chunk.content for chunk in self.chunks]
 
     @classmethod
     def from_chunks(
-        cls, chunks: List[Any], chunker: BaseDocumentChunker[T], document_id: Optional[int] = None
+        cls, chunks: list[Any], chunker: BaseDocumentChunker[T], document_id: Optional[int] = None
     ) -> "ChunkedDocument[T]":
         """Create a :class:`ChunkedDocument` from pre-split chunks.
 
         Args:
-            chunks: List of text chunks to include
+            chunks: list of text chunks to include
             document_id: Optional document identifier
 
         Returns:
@@ -103,10 +104,11 @@ class ChunkedDocument(Generic[T]):
         for chunk in chunks:
             splits = chunker.normalize_chunk(chunk)
             chunk_length = sum(chunker.unit_length(unit) for unit in splits)
-            assert chunk_length <= chunker.chunk_size, (
-                "Chunk length exceeds the maximum chunk size defined in the chunker."
-                f" Chunk length: {chunk_length}, Max chunk size: {chunker.chunk_size}"
-            )
+            if chunk_length > chunker.chunk_size:
+                raise ValueError(
+                    "Chunk length exceeds the maximum chunk size defined in the chunker. "
+                    f"Chunk length: {chunk_length}, Max chunk size: {chunker.chunk_size}"
+                )
             result.append(
                 ChunkData.from_splits(
                     splits,
@@ -151,7 +153,7 @@ class KARAUpdater(Generic[T]):
     """
     Knowledge-Aware Re-embedding Algorithm updater.
 
-    Efficiently updates document chunks by minimizing embedding operations
+    Efficiently updates document collections by minimizing embedding operations
     through intelligent reuse of existing chunks.
     """
 
@@ -168,12 +170,12 @@ class KARAUpdater(Generic[T]):
         self.chunker: BaseDocumentChunker[T] = chunker
         self.max_chunk_size: int = chunker.chunk_size
 
-    def create_knowledge_base(self, documents: List[str]) -> UpdateResult[T]:
+    def create_collection(self, documents: list[str]) -> UpdateResult[T]:
         """
-        Create a new knowledge base from documents.
+        Create a new document collection from documents.
 
         Args:
-            documents: List of document texts
+            documents: list of document texts
 
         Returns:
             UpdateResult with initial chunks
@@ -207,38 +209,38 @@ class KARAUpdater(Generic[T]):
             new_chunked_doc=ChunkedDocument[T](chunks=all_chunks),
         )
 
-    def update_knowledge_base(
-        self, current_kb: ChunkedDocument[T], documents: List[str]
+    def update_collection(
+        self, current_collection: ChunkedDocument[T], documents: list[str]
     ) -> UpdateResult[T]:
         """
-        Update the knowledge base with new documents.
+        Update the document collection with new documents.
 
         Args:
-            current_kb: Current knowledge base state
-            documents: List of updated document texts
+            current_collection: Current document collection state
+            documents: list of updated document texts
 
         Returns:
-            UpdateResult with statistics and new knowledge base
+            UpdateResult with statistics and new collection
         """
         if not documents:
             return UpdateResult(
-                num_deleted=len(current_kb.chunks),
-                new_chunked_doc=ChunkedDocument(chunks=[]),
+                num_deleted=len(current_collection.chunks),
+                new_chunked_doc=ChunkedDocument[T](chunks=[]),
             )
 
         # Process each document separately and combine results
-        all_new_chunks: List[ChunkData[T]] = []
+        all_new_chunks: list[ChunkData[T]] = []
         combined_result: UpdateResult[T] = UpdateResult()
-        old_chunk_counts: Dict[str, int] = {}
-        for chunk in current_kb.chunks:
+        old_chunk_counts: dict[str, int] = {}
+        for chunk in current_collection.chunks:
             old_chunk_counts[chunk.hash] = old_chunk_counts.get(chunk.hash, 0) + 1
 
-        used_counts: Dict[str, int] = {}
+        used_counts: dict[str, int] = {}
 
         for doc_id, document in enumerate(documents):
             new_splits = self.chunker._split_to_units(document)
             doc_result = self._update_chunks_for_document(
-                current_kb, new_splits, doc_id, set(old_chunk_counts.keys())
+                current_collection, new_splits, doc_id, set(old_chunk_counts.keys())
             )
 
             assert doc_result.new_chunked_doc is not None
@@ -270,19 +272,19 @@ class KARAUpdater(Generic[T]):
 
     def _update_chunks_for_document(
         self,
-        current_kb: ChunkedDocument[T],
-        new_splits: List[T],
+        current_collection: ChunkedDocument[T],
+        new_splits: list[T],
         document_id: int,
-        old_chunk_hashes: Set[str],
+        old_chunk_hashes: set[str],
     ) -> UpdateResult[T]:
         """
         Update chunks for a single document using the KARA algorithm.
 
         Args:
-            current_kb: Current knowledge base state
+            current_collection: Current document collection state
             new_splits: New splits to process for this document
             document_id: ID of the document being processed
-            old_chunk_hashes: Set of existing chunk hashes
+            old_chunk_hashes: set of existing chunk hashes
 
         Returns:
             UpdateResult with new chunks and statistics for this document
@@ -295,7 +297,7 @@ class KARAUpdater(Generic[T]):
             )
 
         # Build graph of possible chunks for this document
-        edges: List[List[Tuple[int, float, List[T], str]]] = [[] for _ in range(N + 1)]
+        edges: list[list[tuple[int, float, list[T], str]]] = [[] for _ in range(N + 1)]
 
         max_chunk_size = self.max_chunk_size
         max_chunk_size_float = float(max_chunk_size)
@@ -304,7 +306,7 @@ class KARAUpdater(Generic[T]):
 
         for i in range(N):
             current_length = 0
-            chunk_splits: List[T] = []
+            chunk_splits: list[T] = []
 
             for j in range(i + 1, N + 1):
                 if j <= N:
@@ -348,10 +350,10 @@ class KARAUpdater(Generic[T]):
         min_num_edges = [int_inf] * (N + 1)
         min_cost[0] = 0
         min_num_edges[0] = 0
-        previous_node: List[Optional[int]] = [None] * (N + 1)
-        previous_edge: List[Optional[Tuple[int, float, List[T], str]]] = [None] * (N + 1)
+        previous_node: list[Optional[int]] = [None] * (N + 1)
+        previous_edge: list[Optional[tuple[int, float, list[T], str]]] = [None] * (N + 1)
 
-        heap: List[Tuple[float, int, int]] = [(0, 0, 0)]  # (cost, edge_count, node)
+        heap: list[tuple[float, int, int]] = [(0, 0, 0)]  # (cost, edge_count, node)
 
         while heap:
             cost_u, edges_count_u, u = heapq.heappop(heap)
@@ -369,11 +371,11 @@ class KARAUpdater(Generic[T]):
                     min_num_edges[v] = new_num_edges
                     previous_node[v] = u
                     previous_edge[v] = (v, edge_cost, chunk_splits, chunk_hash)
-                    heap_item: Tuple[float, int, int] = (new_cost, new_num_edges, v)
+                    heap_item: tuple[float, int, int] = (new_cost, new_num_edges, v)
                     heapq.heappush(heap, heap_item)
 
         # Reconstruct the solution for this document
-        new_chunks: List[ChunkData[T]] = []
+        new_chunks: list[ChunkData[T]] = []
         result: UpdateResult[T] = UpdateResult()
 
         node = N
@@ -399,29 +401,31 @@ class KARAUpdater(Generic[T]):
         result.new_chunked_doc = ChunkedDocument[T](chunks=new_chunks)
         return result
 
-    def _update_chunks(self, current_kb: ChunkedDocument, new_splits: List[Any]) -> UpdateResult:
+    def _update_chunks(
+        self, current_collection: ChunkedDocument[Any], new_splits: list[Any]
+    ) -> UpdateResult[Any]:
         """
         Update chunks using the KARA algorithm for backward compatibility.
         This method handles single document updates.
 
         Args:
-            current_kb: Current knowledge base state
+            current_collection: Current document collection state
             new_splits: New splits to process
 
         Returns:
             UpdateResult with new chunks and statistics
         """
-        old_chunk_counts: Dict[str, int] = {}
-        for chunk in current_kb.chunks:
+        old_chunk_counts: dict[str, int] = {}
+        for chunk in current_collection.chunks:
             old_chunk_counts[chunk.hash] = old_chunk_counts.get(chunk.hash, 0) + 1
 
         # Use the new multi-document method with document_id = 0
         doc_result = self._update_chunks_for_document(
-            current_kb, new_splits, 0, set(old_chunk_counts.keys())
+            current_collection, new_splits, 0, set(old_chunk_counts.keys())
         )
 
         # Count used chunks
-        used_counts: Dict[str, int] = {}
+        used_counts: dict[str, int] = {}
         assert doc_result.new_chunked_doc is not None
         for chunk in doc_result.new_chunked_doc.chunks:
             used_counts[chunk.hash] = used_counts.get(chunk.hash, 0) + 1
