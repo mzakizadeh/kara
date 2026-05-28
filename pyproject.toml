@@ -51,7 +51,7 @@ dev = [
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
 ]
-doc = ["sphinx==8.2.3", "sphinx-rtd-theme==3.0.2"]
+doc = ["sphinx>=7.0.0", "sphinx-rtd-theme>=3.0.0"]
 all = ["kara-toolkit[langchain,openai,huggingface,dev]"]
 
 [project.urls]
