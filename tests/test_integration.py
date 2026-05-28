@@ -32,14 +32,14 @@ class TestExamplesIntegration:
         chunker = CharacterChunker(chunk_size=50, separators=[". ", " "], keep_separator=True)
         updater = KARAUpdater(chunker=chunker)
 
-        # Create initial knowledge base
-        initial_result = updater.create_knowledge_base([original_doc])
+        # Create initial collection
+        initial_result = updater.create_collection([original_doc])
         assert initial_result.new_chunked_doc is not None
         initial_chunks = len(initial_result.new_chunked_doc.chunks)
         assert initial_chunks > 0
 
         # Update with modified document
-        update_result = updater.update_knowledge_base(initial_result.new_chunked_doc, [updated_doc])
+        update_result = updater.update_collection(initial_result.new_chunked_doc, [updated_doc])
 
         # Validate results
         assert update_result.new_chunked_doc is not None
@@ -83,14 +83,12 @@ class TestExamplesIntegration:
         updater = KARAUpdater(chunker=chunker)
 
         # Process original document
-        original_result = updater.create_knowledge_base([original_doc])
+        original_result = updater.create_collection([original_doc])
         assert original_result.new_chunked_doc is not None
         original_chunks = original_result.new_chunked_doc.chunks
 
         # Process updated document
-        updated_result = updater.update_knowledge_base(
-            original_result.new_chunked_doc, [updated_doc]
-        )
+        updated_result = updater.update_collection(original_result.new_chunked_doc, [updated_doc])
         assert updated_result.new_chunked_doc is not None
         updated_chunks = updated_result.new_chunked_doc.chunks
 
@@ -128,22 +126,22 @@ class TestExamplesIntegration:
         chunker = CharacterChunker(chunk_size=40, separators=[". ", " "], keep_separator=True)
         updater = KARAUpdater(chunker=chunker)
 
-        # Create initial knowledge base
-        initial_result = updater.create_knowledge_base(initial_docs)
-        initial_kb = initial_result.new_chunked_doc
-        assert initial_kb is not None
+        # Create initial collection
+        initial_result = updater.create_collection(initial_docs)
+        initial_collection = initial_result.new_chunked_doc
+        assert initial_collection is not None
 
         # Verify initial document structure
-        doc_ids = initial_kb.get_document_ids()
+        doc_ids = initial_collection.get_document_ids()
         assert len(doc_ids) == 3, f"Expected 3 documents, got {len(doc_ids)}"
 
         # Update with new documents
-        update_result = updater.update_knowledge_base(initial_kb, updated_docs)
-        updated_kb = update_result.new_chunked_doc
-        assert updated_kb is not None
+        update_result = updater.update_collection(initial_collection, updated_docs)
+        updated_collection = update_result.new_chunked_doc
+        assert updated_collection is not None
 
         # Verify updated structure
-        updated_doc_ids = updated_kb.get_document_ids()
+        updated_doc_ids = updated_collection.get_document_ids()
         assert len(updated_doc_ids) == 4, f"Expected 4 documents, got {len(updated_doc_ids)}"
 
         # Validate efficiency
@@ -190,9 +188,9 @@ class TestExamplesIntegration:
             updater = KARAUpdater(chunker=chunker)
 
             # Create and update
-            initial_result = updater.create_knowledge_base([text])
+            initial_result = updater.create_collection([text])
             assert initial_result.new_chunked_doc is not None
-            update_result = updater.update_knowledge_base(
+            update_result = updater.update_collection(
                 initial_result.new_chunked_doc, [updated_text]
             )
             assert update_result.new_chunked_doc is not None

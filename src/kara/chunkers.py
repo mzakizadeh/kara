@@ -5,16 +5,14 @@ Document chunkers for breaking documents into optimal chunks.
 import json
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Collection, Sequence
+from collections.abc import Set as AbstractSet
 from typing import (
-    AbstractSet,
     Any,
     Callable,
-    Collection,
     Generic,
-    List,
     Literal,
     Optional,
-    Sequence,
     TypeVar,
     Union,
 )
@@ -41,16 +39,16 @@ class BaseDocumentChunker(ABC, Generic[T]):
         self.overlap = overlap
 
     @abstractmethod
-    def create_chunks(self, text: str) -> List[List[T]]:
+    def create_chunks(self, text: str) -> list[list[T]]:
         """Split text into optimally-sized chunks."""
         pass
 
     @abstractmethod
-    def _split_to_units(self, text: str) -> List[T]:
+    def _split_to_units(self, text: str) -> list[T]:
         """Split text into smallest units (e.g., by separators, tokens)."""
         pass
 
-    def normalize_chunk(self, chunk: Any) -> List[T]:
+    def normalize_chunk(self, chunk: Any) -> list[T]:
         """Normalize a chunk to a list of units."""
         if isinstance(chunk, str):
             return self._split_to_units(chunk)
@@ -77,7 +75,7 @@ class BaseDocumentChunker(ABC, Generic[T]):
             return "".join(units)  # type: ignore
         return list(units)
 
-    def _merge_units_greedy(self, units: List[T], max_chunk_size: int) -> List[List[T]]:
+    def _merge_units_greedy(self, units: list[T], max_chunk_size: int) -> list[list[T]]:
         """
         Merge units greedily to create chunks within size limit.
 
@@ -91,16 +89,16 @@ class BaseDocumentChunker(ABC, Generic[T]):
         if not units:
             return []
 
-        def chunk_length(chunk_units: List[Any]) -> int:
+        def chunk_length(chunk_units: list[Any]) -> int:
             return sum(self.unit_length(unit) for unit in chunk_units)
 
-        chunks: List[List[Any]] = []
+        chunks: list[list[Any]] = []
         overlap_units = self.overlap
         start = 0
         units_count = len(units)
 
         while start < units_count:
-            current_chunk: List[Any] = []
+            current_chunk: list[Any] = []
             current_length = 0
             end = start
 
@@ -139,7 +137,7 @@ class CharacterChunker(BaseDocumentChunker[str]):
 
     def __init__(
         self,
-        separators: Optional[List[str]] = None,
+        separators: Optional[list[str]] = None,
         chunk_size: int = 4000,
         overlap: int = 0,
         keep_separator: bool = True,
@@ -157,7 +155,7 @@ class CharacterChunker(BaseDocumentChunker[str]):
         self.separators = separators or ["\n\n", "\n", " "]
         self.keep_separator = keep_separator
 
-    def create_chunks(self, text: str) -> List[List[str]]:
+    def create_chunks(self, text: str) -> list[list[str]]:
         """
         Split text into optimally-sized chunks.
 
@@ -173,16 +171,16 @@ class CharacterChunker(BaseDocumentChunker[str]):
         # Then, greedily merge into chunks
         return self._merge_units_greedy(units, self.chunk_size)
 
-    def _split_to_units(self, text: str) -> List[str]:
+    def _split_to_units(self, text: str) -> list[str]:
         """Split text into smallest units using separators."""
         return self._split_text_with_regex(text, self.separators, self.keep_separator)
 
     def _split_text_with_regex(
         self,
         text: str,
-        separators: Union[str, List[str]],
+        separators: Union[str, list[str]],
         keep_separator: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Split text using regex with optional separator preservation.
 
@@ -228,7 +226,7 @@ class TokenChunker(BaseDocumentChunker[int]):
 
     def __init__(
         self,
-        tokenizer_function: Optional[Callable[[str], List[int]]] = None,
+        tokenizer_function: Optional[Callable[[str], list[int]]] = None,
         chunk_size: int = 512,
         overlap: int = 0,
     ):
@@ -243,7 +241,7 @@ class TokenChunker(BaseDocumentChunker[int]):
         super().__init__(chunk_size=chunk_size, overlap=overlap)
         self.tokenizer_function = tokenizer_function
 
-    def create_chunks(self, text: str) -> List[List[int]]:
+    def create_chunks(self, text: str) -> list[list[int]]:
         """
         Split text into token-based chunks.
 
@@ -259,7 +257,7 @@ class TokenChunker(BaseDocumentChunker[int]):
         # Then, greedily merge into chunks
         return self._merge_units_greedy(tokens, self.chunk_size)
 
-    def _split_to_units(self, text: str) -> List[int]:
+    def _split_to_units(self, text: str) -> list[int]:
         """Split text into token units."""
         if self.tokenizer_function is None:
             raise NotImplementedError(
@@ -312,7 +310,7 @@ class OpenAITokenChunker(TokenChunker):
         self.allowed_special = allowed_special
         self.disallowed_special = disallowed_special
 
-    def _split_to_units(self, text: str) -> List[int]:
+    def _split_to_units(self, text: str) -> list[int]:
         """Split text into token IDs using tiktoken."""
         # Only pass special token arguments if they are explicitly set to non-None values
         kwargs: dict[str, Any] = {}
@@ -359,7 +357,7 @@ class HuggingFaceTokenChunker(TokenChunker):
         self.model_name = model_name
         self._tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    def _split_to_units(self, text: str) -> List[int]:
+    def _split_to_units(self, text: str) -> list[int]:
         """Split text into token IDs using a Hugging Face tokenizer."""
         return list(self._tokenizer.encode(text, add_special_tokens=False))
 
