@@ -66,7 +66,7 @@ class KARATextSplitter(TextSplitter):
         cls,
         encoding_name: str = "cl100k_base",
         model_name: Optional[str] = None,
-        allowed_special: Union[Literal["all"], AbstractSet[str]] = set(),
+        allowed_special: Optional[Union[Literal["all"], AbstractSet[str]]] = None,
         disallowed_special: Union[Literal["all"], Collection[str]] = "all",
         **kwargs: Any,
     ) -> "KARATextSplitter":
