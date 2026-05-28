@@ -56,7 +56,7 @@ update_result = updater.update_collection(
 )
 
 print(f"Efficiency: {update_result.efficiency_ratio:.1%}")
-print(f"Chunks reused: {update_result.num_reused}")
+print(f"Tokens reused: {update_result.num_reused * 512} (approx)")
 ```
 
 ## LangChain Integration
