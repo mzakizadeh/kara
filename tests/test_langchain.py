@@ -66,9 +66,9 @@ def test_kara_text_splitter_from_huggingface(mocker: Any) -> None:
     import sys
     from unittest.mock import MagicMock
 
-    # Mock transformers module if not present
+    # Mock transformers module safely using mocker
     mock_transformers = MagicMock()
-    sys.modules["transformers"] = mock_transformers
+    mocker.patch.dict(sys.modules, {"transformers": mock_transformers})
 
     mock_instance = MagicMock()
     mock_transformers.AutoTokenizer.from_pretrained.return_value = mock_instance
@@ -76,7 +76,7 @@ def test_kara_text_splitter_from_huggingface(mocker: Any) -> None:
     mock_instance.decode.side_effect = lambda x, **kwargs: f"token_{x[0]}"
 
     splitter = KARATextSplitter.from_huggingface_tokenizer(
-        model_name="mock-model", chunk_size=10, chunk_overlap=2
+        "mock-model", chunk_size=10, chunk_overlap=2
     )
 
     from kara.chunkers import HuggingFaceTokenChunker
@@ -88,9 +88,6 @@ def test_kara_text_splitter_from_huggingface(mocker: Any) -> None:
     text = "mock text"
     chunks = splitter.split_text(text)
     assert len(chunks) > 0
-
-    # Cleanup
-    del sys.modules["transformers"]
 
 
 def test_kara_text_splitter_previous_chunks() -> None:

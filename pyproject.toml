@@ -68,7 +68,7 @@ where = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py39"
 extend-exclude = ["src/**/_version.py"]
 
 [tool.ruff.lint]
@@ -109,3 +109,4 @@ addopts = "--cov=kara --cov-report=html --cov-report=term-missing"
 write_to = "src/kara/_version.py"
 version_scheme = "release-branch-semver"
 local_scheme = "no-local-version"
+
