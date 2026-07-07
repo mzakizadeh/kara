@@ -98,6 +98,14 @@ disallow_untyped_defs = true
 ignore_missing_imports = true
 exclude = ["build/"]
 
+# numpy is only a transitive dependency (via langchain-core) and is not used in
+# src. Newer numpy stubs use PEP 695 `type` statements that mypy rejects under
+# python_version < 3.12, so skip following them.
+[[tool.mypy.overrides]]
+module = ["numpy.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
