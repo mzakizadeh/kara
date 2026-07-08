@@ -124,10 +124,10 @@ While KARA provides significant efficiency improvements for document collection 
 
 - [x] **Token-Based Optimal Chunking** - Support for OpenAI and Hugging Face tokenizers
 - [x] **Overlapping Chunk Support** - Support for overlapping units between chunks
-- [ ] **100% Test Coverage** - Complete test suite with full coverage
-- [ ] **Performance Benchmarks** - Real-world efficiency testing
+- [x] **Performance Benchmarks** - Real-world efficiency testing
+- [x] **Complete Documentation** - API reference, guides, and examples
 - [ ] **Framework Support** - LlamaIndex, Haystack, and others
-- [ ] **Complete Documentation** - API reference, guides, and examples
+- [ ] **100% Test Coverage** - Complete test suite with full coverage
 
 ## License
 
