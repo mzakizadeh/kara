@@ -10,6 +10,12 @@
 
 KARA is a Python library that efficiently updates document collections by reducing unnecessary embedding operations. When documents change, KARA automatically identifies and reuses existing chunks, minimizing the need for new embeddings.
 
+<p align="center">
+  <img src="benchmarks/wiki_benchmark.png" alt="Cumulative re-embedding cost as a real Wikipedia article is edited over time: KARA stays well below LangChain's Index API." width="640"/>
+  <br/>
+  <em>Cumulative embeddings recomputed as a real Wikipedia article is edited over time. KARA re-embeds ~5× fewer chunks than LangChain's Indexing API (and ~40× fewer than full re-embedding). See <a href="benchmarks/">benchmarks/</a>.</em>
+</p>
+
 ## Installation
 
 Install KARA with your preferred framework and provider:
